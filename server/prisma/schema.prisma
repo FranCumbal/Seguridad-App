@@ -1,0 +1,249 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlserver"
+  url      = env("DATABASE_URL")
+}
+
+model Usuario {
+  id            Int      @id @default(autoincrement())
+  username      String   @unique @db.VarChar(100)
+  email         String   @unique @db.VarChar(255)
+  password_hash String   @db.VarChar(255)
+  nombre        String   @db.VarChar(150)
+  apellido      String   @db.VarChar(150)
+  rol           String   @default("ENTREVISTADOR") @db.VarChar(50)
+  activo        Boolean  @default(true)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+  sesiones      Sesion[]
+  auditoria     Auditoria[]
+  @@map("usuarios")
+}
+
+model Sesion {
+  id        Int      @id @default(autoincrement())
+  usuarioId Int
+  token     String   @unique @db.VarChar(500)
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+  usuario   Usuario  @relation(fields: [usuarioId], references: [id])
+  @@map("sesiones")
+}
+
+model Entrevistador {
+  id              Int      @id @default(autoincrement())
+  nombre_completo String   @db.VarChar(200)
+  cargo           String   @db.VarChar(150)
+  fotografia      String?  @db.VarChar(500)
+  activo          Boolean  @default(true)
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+  entrevistas_asignadas EntrevistaEntrevistador[]
+  @@map("entrevistadores")
+}
+
+model Entrevista {
+  id                      Int      @id @default(autoincrement())
+  codigo                  String   @unique @db.VarChar(50)
+  estado                  String   @default("EN_PROCESO") @db.VarChar(50)
+  observaciones_iniciales String?  @db.Text
+  fecha_entrevista        DateTime @default(now())
+  createdAt               DateTime @default(now())
+  updatedAt               DateTime @updatedAt
+  entrevistadores         EntrevistaEntrevistador[]
+  datos_personales        DatosPersonales?
+  familia                 Familia[]
+  estudios                Estudio[]
+  finanzas                Finanzas?
+  historial_laboral       HistorialLaboral[]
+  drogas_alcohol          DrogasAlcohol?
+  judicial                Judicial?
+  infiltracion            Infiltracion?
+  validaciones            Validaciones?
+  @@map("entrevistas")
+}
+
+model EntrevistaEntrevistador {
+  id              Int           @id @default(autoincrement())
+  entrevistaId    Int
+  entrevistadorId Int
+  orden           Int           @default(1)
+  entrevista      Entrevista    @relation(fields: [entrevistaId], references: [id], onDelete: Cascade)
+  entrevistador   Entrevistador @relation(fields: [entrevistadorId], references: [id])
+  @@unique([entrevistaId, entrevistadorId])
+  @@map("entrevista_entrevistadores")
+}
+
+model DatosPersonales {
+  id                   Int        @id @default(autoincrement())
+  entrevistaId         Int        @unique
+  nombres              String     @db.VarChar(150)
+  apellidos            String     @db.VarChar(150)
+  cedula               String     @db.VarChar(20)
+  fecha_nacimiento     DateTime
+  lugar_nacimiento     String?    @db.VarChar(200)
+  estado_civil         String     @db.VarChar(50)
+  numero_hijos         Int?       @default(0)
+  telefono_personal    String?    @db.VarChar(20)
+  telefono_alternativo String?    @db.VarChar(20)
+  email                String?    @db.VarChar(255)
+  direccion            String?    @db.Text
+  ciudad_residencia    String?    @db.VarChar(100)
+  sector_barrio        String?    @db.VarChar(150)
+  fotografia           String?    @db.VarChar(500)
+  tiempo_residencia    String?    @db.VarChar(100)
+  vivienda_tipo        String?    @db.VarChar(100)
+  discapacidad         Boolean    @default(false)
+  tipo_discapacidad    String?    @db.VarChar(200)
+  cargo_aplicar        String?    @db.VarChar(200)
+  entrevista           Entrevista @relation(fields: [entrevistaId], references: [id], onDelete: Cascade)
+  @@map("datos_personales")
+}
+
+model Familia {
+  id              Int        @id @default(autoincrement())
+  entrevistaId    Int
+  tipo_parentesco String     @db.VarChar(100)
+  nombres         String     @db.VarChar(200)
+  edad            Int?
+  ocupacion       String?    @db.VarChar(200)
+  lugar_trabajo   String?    @db.VarChar(200)
+  celular         String?    @db.VarChar(20)
+  observaciones   String?    @db.Text
+  entrevista      Entrevista @relation(fields: [entrevistaId], references: [id], onDelete: Cascade)
+  @@map("familia")
+}
+
+model Estudio {
+  id              Int        @id @default(autoincrement())
+  entrevistaId    Int
+  nivel           String     @db.VarChar(100)
+  institucion     String     @db.VarChar(200)
+  titulo_obtenido String?    @db.VarChar(200)
+  anio_inicio     Int?
+  anio_fin        Int?
+  estado          String?    @db.VarChar(50)
+  ciudad          String?    @db.VarChar(100)
+  verificado      Boolean    @default(false)
+  observaciones   String?    @db.Text
+  entrevista      Entrevista @relation(fields: [entrevistaId], references: [id], onDelete: Cascade)
+  @@map("estudios")
+}
+
+model Finanzas {
+  id                 Int        @id @default(autoincrement())
+  entrevistaId       Int        @unique
+  ingresos_mensuales Decimal?   @db.Decimal(10, 2)
+  egresos_mensuales  Decimal?   @db.Decimal(10, 2)
+  deudas_actuales    Boolean    @default(false)
+  monto_deudas       Decimal?   @db.Decimal(10, 2)
+  tipo_deudas        String?    @db.Text
+  tiene_bienes       Boolean    @default(false)
+  descripcion_bienes String?    @db.Text
+  score_crediticio   String?    @db.VarChar(50)
+  buro_credito       String?    @db.VarChar(50)
+  demandas_coactivas Boolean    @default(false)
+  detalle_coactivas  String?    @db.Text
+  observaciones      String?    @db.Text
+  entrevista         Entrevista @relation(fields: [entrevistaId], references: [id], onDelete: Cascade)
+  @@map("finanzas")
+}
+
+model HistorialLaboral {
+  id               Int        @id @default(autoincrement())
+  entrevistaId     Int
+  empresa          String     @db.VarChar(200)
+  cargo            String     @db.VarChar(200)
+  fecha_inicio     DateTime
+  fecha_fin        DateTime?
+  trabajo_actual   Boolean    @default(false)
+  motivo_salida    String?    @db.Text
+  jefe_inmediato   String?    @db.VarChar(200)
+  telefono_empresa String?    @db.VarChar(20)
+  salario          Decimal?   @db.Decimal(10, 2)
+  verificado       Boolean    @default(false)
+  observaciones    String?    @db.Text
+  entrevista       Entrevista @relation(fields: [entrevistaId], references: [id], onDelete: Cascade)
+  @@map("historial_laboral")
+}
+
+model DrogasAlcohol {
+  id                  Int        @id @default(autoincrement())
+  entrevistaId        Int        @unique
+  consume_alcohol     Boolean    @default(false)
+  frecuencia_alcohol  String?    @db.VarChar(100)
+  consume_drogas      Boolean    @default(false)
+  tipo_drogas         String?    @db.Text
+  tratamiento_previo  Boolean    @default(false)
+  detalle_tratamiento String?    @db.Text
+  fuma                Boolean    @default(false)
+  frecuencia_tabaco   String?    @db.VarChar(100)
+  observaciones       String?    @db.Text
+  entrevista          Entrevista @relation(fields: [entrevistaId], references: [id], onDelete: Cascade)
+  @@map("drogas_alcohol")
+}
+
+model Judicial {
+  id                   Int        @id @default(autoincrement())
+  entrevistaId         Int        @unique
+  antecedentes_penales Boolean    @default(false)
+  detalle_penales      String?    @db.Text
+  procesos_judiciales  Boolean    @default(false)
+  detalle_procesos     String?    @db.Text
+  detencion_previa     Boolean    @default(false)
+  detalle_detencion    String?    @db.Text
+  demandas_civiles     Boolean    @default(false)
+  detalle_demandas     String?    @db.Text
+  verificado_sistema   Boolean    @default(false)
+  observaciones        String?    @db.Text
+  entrevista           Entrevista @relation(fields: [entrevistaId], references: [id], onDelete: Cascade)
+  @@map("judicial")
+}
+
+model Infiltracion {
+  id                       Int        @id @default(autoincrement())
+  entrevistaId             Int        @unique
+  vinculo_organizaciones   Boolean    @default(false)
+  tipo_organizaciones      String?    @db.Text
+  familiar_implicado       Boolean    @default(false)
+  detalle_familiar         String?    @db.Text
+  contacto_grupos_ilegales Boolean    @default(false)
+  detalle_grupos           String?    @db.Text
+  amenaza_extorsion        Boolean    @default(false)
+  detalle_amenaza          String?    @db.Text
+  observaciones            String?    @db.Text
+  nivel_riesgo             String     @default("BAJO") @db.VarChar(20)
+  entrevista               Entrevista @relation(fields: [entrevistaId], references: [id], onDelete: Cascade)
+  @@map("infiltracion")
+}
+
+model Validaciones {
+  id                      Int        @id @default(autoincrement())
+  entrevistaId            Int        @unique
+  documentos_verificados  Boolean    @default(false)
+  referencias_verificadas Boolean    @default(false)
+  resultado_general       String     @default("PENDIENTE") @db.VarChar(50)
+  calificacion            Int?
+  recomendacion           String?    @db.Text
+  observaciones_finales   String?    @db.Text
+  aprobado_por            String?    @db.VarChar(200)
+  fecha_validacion        DateTime?
+  entrevista              Entrevista @relation(fields: [entrevistaId], references: [id], onDelete: Cascade)
+  @@map("validaciones")
+}
+
+model Auditoria {
+  id         Int      @id @default(autoincrement())
+  usuarioId  Int
+  accion     String   @db.VarChar(200)
+  tabla      String   @db.VarChar(100)
+  registroId Int?
+  datos      String?  @db.Text
+  ip         String?  @db.VarChar(50)
+  createdAt  DateTime @default(now())
+  usuario    Usuario  @relation(fields: [usuarioId], references: [id])
+  @@map("auditoria")
+}

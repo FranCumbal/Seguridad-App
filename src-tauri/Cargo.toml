@@ -1,0 +1,26 @@
+[package]
+name = "prompt-maestro"
+version = "1.0.0"
+description = "Prompt Maestro — Sistema de Entrevistas de Seguridad"
+authors = ["Empresa"]
+license = ""
+repository = ""
+edition = "2021"
+
+[build-dependencies]
+tauri-build = { version = "1.5", features = [] }
+
+[dependencies]
+serde_json = "1.0"
+serde = { version = "1.0", features = ["derive"] }
+tauri = { version = "1.6", features = [
+  "dialog-all",
+  "fs-all",
+  "http-all",
+  "notification-all",
+  "window-all",
+  "shell-open"
+] }
+
+[features]
+custom-protocol = ["tauri/custom-protocol"]

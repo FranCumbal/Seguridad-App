@@ -1,0 +1,35 @@
+# Dependencies
+node_modules/
+server/node_modules/
+
+# Build outputs
+dist/
+server/dist/
+src-tauri/target/
+
+# Env files
+.env
+server/.env
+
+# Uploads (user data)
+server/uploads/entrevistadores/*.jpg
+server/uploads/entrevistadores/*.png
+server/uploads/entrevistadores/*.webp
+
+# Tauri
+src-tauri/.cargo-lock
+
+# Logs
+*.log
+npm-debug.log*
+
+# OS
+.DS_Store
+Thumbs.db
+
+# VS Code
+.vscode/settings.json
+.vscode/launch.json
+
+# Prisma
+prisma/migrations/
