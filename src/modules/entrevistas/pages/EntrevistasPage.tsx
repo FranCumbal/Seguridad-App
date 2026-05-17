@@ -113,7 +113,7 @@ export default function EntrevistasPage() {
           </Text>
           <br />
           <Text style={{ fontSize: 11, color: '#6e7681' }}>
-            CI: {r.datos_personales.cedula} · {r.datos_personales.cargo_aplicar || 'Sin cargo'}
+            CI: {r.datos_personales.cedula} · {r.datos_personales.cargo_postula || 'Sin cargo'}
           </Text>
         </div>
       ) : <Text style={{ color: '#484f58', fontSize: 12 }}>Sin datos personales</Text>,

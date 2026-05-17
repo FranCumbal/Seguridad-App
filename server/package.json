@@ -1,7 +1,7 @@
 {
   "name": "prompt-maestro-server",
   "version": "1.0.0",
-  "description": "Backend API for Prompt Maestro",
+  "description": "Backend API for Seguridad App",
   "main": "dist/index.js",
   "scripts": {
     "dev": "nodemon --exec ts-node src/index.ts",

@@ -45,7 +45,7 @@ estadisticasRouter.get('/dashboard', async (_req: AuthRequest, res: Response): P
         take: 5,
         orderBy: { createdAt: 'desc' },
         include: {
-          datos_personales: { select: { nombres: true, apellidos: true, cargo_aplicar: true } },
+          datos_personales: { select: { nombres: true, apellidos: true, cargo_postula: true } },
           validaciones: { select: { resultado_general: true } },
         },
       }),

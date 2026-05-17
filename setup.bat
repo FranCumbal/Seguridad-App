@@ -1,7 +1,7 @@
 @echo off
 chcp 65001 >nul
 echo ============================================================
-echo   PROMPT MAESTRO — Setup Automatizado
+echo   SEGURIDAD APP — Setup Automatizado
 echo ============================================================
 echo.
 

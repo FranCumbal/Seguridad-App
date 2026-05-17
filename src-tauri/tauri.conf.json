@@ -8,7 +8,7 @@
     "withGlobalTauri": true
   },
   "package": {
-    "productName": "Prompt Maestro",
+    "productName": "Seguridad App",
     "version": "1.0.0"
   },
   "tauri": {
@@ -30,9 +30,8 @@
     "bundle": {
       "active": true,
       "targets": "all",
-      "identifier": "com.empresa.promptmaestro",
+      "identifier": "com.empresa.seguridadapp",
       "icon": [
-        "icons/32x32.png",
         "icons/128x128.png",
         "icons/128x128@2x.png",
         "icons/icon.icns",
@@ -46,7 +45,7 @@
       {
         "fullscreen": false,
         "resizable": true,
-        "title": "Prompt Maestro — Sistema de Entrevistas de Seguridad",
+        "title": "Seguridad App — Sistema de Entrevistas",
         "width": 1440,
         "height": 900,
         "minWidth": 1280,

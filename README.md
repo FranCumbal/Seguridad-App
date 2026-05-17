@@ -51,7 +51,7 @@ copy server\.env.example server\.env
 Editar **`server\.env`** con tu cadena de conexión:
 
 ```env
-DATABASE_URL="sqlserver://localhost;instance=SQLEXPRESS;database=PromptMaestro;integratedSecurity=true;encrypt=true;trustServerCertificate=true"
+DATABASE_URL="sqlserver://localhost;instance=SQLEXPRESS;database=SEGURIDADAPP;integratedSecurity=true;encrypt=true;trustServerCertificate=true"
 ```
 
 > ⚠️ **IMPORTANTE**: El formato correcto para Prisma usa `instance=SQLEXPRESS`

@@ -39,7 +39,8 @@ entrevistasRouter.get('/', async (req: AuthRequest, res: Response): Promise<void
         orderBy: { createdAt: 'desc' },
         include: {
           datos_personales: {
-            select: { nombres: true, apellidos: true, cedula: true, cargo_aplicar: true },
+            // Aquí está el cambio principal
+            select: { nombres: true, apellidos: true, cedula: true, cargo_postula: true },
           },
           entrevistadores: {
             include: {
@@ -130,15 +131,20 @@ entrevistasRouter.post('/', async (req: AuthRequest, res: Response): Promise<voi
 entrevistasRouter.put('/:id/datos-personales', async (req: AuthRequest, res: Response): Promise<void> => {
   try {
     const entrevistaId = Number(req.params.id);
-    const data = req.body;
+    // Limpiamos id para evitar el error de IDENTITY en SQL Server
+    const { id, entrevistaId: _, ...datosLimpios } = req.body;
 
     const resultado = await prisma.datosPersonales.upsert({
       where: { entrevistaId },
-      create: { ...data, entrevistaId },
-      update: data,
+      update: datosLimpios,
+      create: { 
+        ...datosLimpios, 
+        entrevistaId 
+      },
     });
     res.json({ success: true, data: resultado });
   } catch (error) {
+    console.error(error);
     res.status(500).json({ success: false, message: 'Error al guardar datos personales' });
   }
 });
@@ -150,11 +156,22 @@ entrevistasRouter.put('/:id/familia', async (req: AuthRequest, res: Response): P
     const { miembros } = req.body;
 
     await prisma.familia.deleteMany({ where: { entrevistaId } });
+    
     const familia = await prisma.familia.createMany({
-      data: miembros.map((m: any) => ({ ...m, entrevistaId })),
+      data: miembros.map((m: any) => {
+        // Extraemos 'key' y 'id' para que no se envíen a la base de datos
+        const { key, id, ...datosLimpios } = m;
+        
+        return { 
+          ...datosLimpios, 
+          entrevistaId 
+        };
+      }),
     });
+    
     res.json({ success: true, data: familia });
   } catch (error) {
+    console.error(error); // Te recomiendo agregar esto para ver el error real en la consola si algo más falla
     res.status(500).json({ success: false, message: 'Error al guardar familia' });
   }
 });
@@ -166,11 +183,22 @@ entrevistasRouter.put('/:id/estudios', async (req: AuthRequest, res: Response): 
     const { estudios } = req.body;
 
     await prisma.estudio.deleteMany({ where: { entrevistaId } });
+    
     const result = await prisma.estudio.createMany({
-      data: estudios.map((e: any) => ({ ...e, entrevistaId })),
+      data: estudios.map((e: any) => {
+        // Extraemos 'key' y 'id' para ignorarlos
+        const { key, id, ...datosLimpios } = e;
+        
+        return {
+          ...datosLimpios,
+          entrevistaId
+        };
+      }),
     });
+    
     res.json({ success: true, data: result });
   } catch (error) {
+    console.error(error);
     res.status(500).json({ success: false, message: 'Error al guardar estudios' });
   }
 });
@@ -179,15 +207,19 @@ entrevistasRouter.put('/:id/estudios', async (req: AuthRequest, res: Response): 
 entrevistasRouter.put('/:id/finanzas', async (req: AuthRequest, res: Response): Promise<void> => {
   try {
     const entrevistaId = Number(req.params.id);
-    const data = req.body;
+    const { id, entrevistaId: _, ...datosLimpios } = req.body;
 
     const resultado = await prisma.finanzas.upsert({
       where: { entrevistaId },
-      create: { ...data, entrevistaId },
-      update: data,
+      update: datosLimpios,
+      create: { 
+        ...datosLimpios, 
+        entrevistaId 
+      },
     });
     res.json({ success: true, data: resultado });
   } catch (error) {
+    console.error(error);
     res.status(500).json({ success: false, message: 'Error al guardar finanzas' });
   }
 });
@@ -199,11 +231,22 @@ entrevistasRouter.put('/:id/historial-laboral', async (req: AuthRequest, res: Re
     const { trabajos } = req.body;
 
     await prisma.historialLaboral.deleteMany({ where: { entrevistaId } });
+    
     const result = await prisma.historialLaboral.createMany({
-      data: trabajos.map((t: any) => ({ ...t, entrevistaId })),
+      data: trabajos.map((t: any) => {
+        // Extraemos 'key' e 'id' para que Prisma no intente guardarlos
+        const { key, id, ...datosLimpios } = t;
+        
+        return {
+          ...datosLimpios,
+          entrevistaId
+        };
+      }),
     });
+    
     res.json({ success: true, data: result });
   } catch (error) {
+    console.error(error);
     res.status(500).json({ success: false, message: 'Error al guardar historial laboral' });
   }
 });
@@ -212,16 +255,20 @@ entrevistasRouter.put('/:id/historial-laboral', async (req: AuthRequest, res: Re
 entrevistasRouter.put('/:id/drogas-alcohol', async (req: AuthRequest, res: Response): Promise<void> => {
   try {
     const entrevistaId = Number(req.params.id);
-    const data = req.body;
+    const { id, entrevistaId: _, ...datosLimpios } = req.body;
 
     const resultado = await prisma.drogasAlcohol.upsert({
       where: { entrevistaId },
-      create: { ...data, entrevistaId },
-      update: data,
+      update: datosLimpios,
+      create: { 
+        ...datosLimpios, 
+        entrevistaId 
+      },
     });
     res.json({ success: true, data: resultado });
   } catch (error) {
-    res.status(500).json({ success: false, message: 'Error al guardar información de drogas/alcohol' });
+    console.error(error);
+    res.status(500).json({ success: false, message: 'Error al guardar registro de drogas/alcohol' });
   }
 });
 
@@ -229,16 +276,20 @@ entrevistasRouter.put('/:id/drogas-alcohol', async (req: AuthRequest, res: Respo
 entrevistasRouter.put('/:id/judicial', async (req: AuthRequest, res: Response): Promise<void> => {
   try {
     const entrevistaId = Number(req.params.id);
-    const data = req.body;
+    const { id, entrevistaId: _, ...datosLimpios } = req.body;
 
     const resultado = await prisma.judicial.upsert({
       where: { entrevistaId },
-      create: { ...data, entrevistaId },
-      update: data,
+      update: datosLimpios,
+      create: { 
+        ...datosLimpios, 
+        entrevistaId 
+      },
     });
     res.json({ success: true, data: resultado });
   } catch (error) {
-    res.status(500).json({ success: false, message: 'Error al guardar información judicial' });
+    console.error(error);
+    res.status(500).json({ success: false, message: 'Error al guardar antecedentes judiciales' });
   }
 });
 
@@ -246,16 +297,20 @@ entrevistasRouter.put('/:id/judicial', async (req: AuthRequest, res: Response): 
 entrevistasRouter.put('/:id/infiltracion', async (req: AuthRequest, res: Response): Promise<void> => {
   try {
     const entrevistaId = Number(req.params.id);
-    const data = req.body;
+    const { id, entrevistaId: _, ...datosLimpios } = req.body;
 
     const resultado = await prisma.infiltracion.upsert({
       where: { entrevistaId },
-      create: { ...data, entrevistaId },
-      update: data,
+      update: datosLimpios,
+      create: { 
+        ...datosLimpios, 
+        entrevistaId 
+      },
     });
     res.json({ success: true, data: resultado });
   } catch (error) {
-    res.status(500).json({ success: false, message: 'Error al guardar información de infiltración' });
+    console.error(error);
+    res.status(500).json({ success: false, message: 'Error al guardar riesgo de infiltración' });
   }
 });
 
@@ -263,23 +318,22 @@ entrevistasRouter.put('/:id/infiltracion', async (req: AuthRequest, res: Respons
 entrevistasRouter.put('/:id/validaciones', async (req: AuthRequest, res: Response): Promise<void> => {
   try {
     const entrevistaId = Number(req.params.id);
-    const data = req.body;
+    
+    // Extraemos 'id' y 'entrevistaId' para que no contaminen el UPDATE de SQL Server
+    const { id, entrevistaId: _, ...datosLimpios } = req.body;
 
     const resultado = await prisma.validaciones.upsert({
       where: { entrevistaId },
-      create: { ...data, entrevistaId },
-      update: data,
+      update: datosLimpios, 
+      create: { 
+        ...datosLimpios, 
+        entrevistaId 
+      },
     });
-
-    if (data.resultado_general) {
-      await prisma.entrevista.update({
-        where: { id: entrevistaId },
-        data: { estado: 'COMPLETADA' },
-      });
-    }
 
     res.json({ success: true, data: resultado });
   } catch (error) {
+    console.error(error);
     res.status(500).json({ success: false, message: 'Error al guardar validaciones' });
   }
 });
