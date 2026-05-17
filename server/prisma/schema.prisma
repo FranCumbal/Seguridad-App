@@ -220,70 +220,116 @@ model ReporteNegativo {
 }
 
 model HistorialLaboral {
-  id               Int        @id @default(autoincrement())
-  entrevistaId     Int
-  empresa          String     @db.VarChar(200)
-  cargo            String     @db.VarChar(200)
-  fecha_inicio     DateTime
-  fecha_fin        DateTime?
-  trabajo_actual   Boolean    @default(false)
-  motivo_salida    String?    @db.Text
-  jefe_inmediato   String?    @db.VarChar(200)
-  telefono_empresa String?    @db.VarChar(20)
-  salario          Decimal?   @db.Decimal(10, 2)
-  verificado       Boolean    @default(false)
-  observaciones    String?    @db.Text
-  entrevista       Entrevista @relation(fields: [entrevistaId], references: [id], onDelete: Cascade)
+  id                         Int                  @id @default(autoincrement())
+  entrevistaId               Int                  @unique
+  medio_vacante              String?              @db.VarChar(100)
+  acto_ilicito               Boolean              @default(false)
+  detalle_grave              String?              @db.Text
+  observaciones              String?              @db.Text
+  entrevista                 Entrevista           @relation(fields: [entrevistaId], references: [id], onDelete: Cascade)
+  experiencias               ExperienciaLaboral[]
+
   @@map("historial_laboral")
 }
 
+model ExperienciaLaboral {
+  id                         Int              @id @default(autoincrement())
+  historialLaboralId         Int
+  empresa                    String           @db.VarChar(200)
+  cargo                      String           @db.VarChar(200)
+  fecha_inicio               DateTime
+  fecha_fin                  DateTime?
+  trabajo_actual             Boolean          @default(false)
+  motivo_salida              String?          @db.Text
+  salario                    Decimal?         @db.Decimal(10, 2)
+  certificado_laboral        Boolean          @default(false)
+  observaciones              String?          @db.Text
+  historial_laboral          HistorialLaboral @relation(fields: [historialLaboralId], references: [id], onDelete: Cascade)
+
+  @@map("experiencia_laboral")
+}
+
 model DrogasAlcohol {
-  id                  Int        @id @default(autoincrement())
-  entrevistaId        Int        @unique
-  consume_alcohol     Boolean    @default(false)
-  frecuencia_alcohol  String?    @db.VarChar(100)
-  consume_drogas      Boolean    @default(false)
-  tipo_drogas         String?    @db.Text
-  tratamiento_previo  Boolean    @default(false)
-  detalle_tratamiento String?    @db.Text
-  fuma                Boolean    @default(false)
-  frecuencia_tabaco   String?    @db.VarChar(100)
-  observaciones       String?    @db.Text
-  entrevista          Entrevista @relation(fields: [entrevistaId], references: [id], onDelete: Cascade)
+  id                         Int        @id @default(autoincrement())
+  entrevistaId               Int        @unique
+  
+  // Sección: Alcohol
+  consume_alcohol            Boolean    @default(false)
+  ultima_vez_alcohol         String?    @db.VarChar(100) // hoy, ayer, ultima semana, etc.
+  bebida_preferencia         String?    @db.VarChar(100)
+  frecuencia_alcohol         String?    @db.VarChar(100) // ocasional, en fiestas, frecuentemente
+  inconvenientes_alcohol     Boolean    @default(false)  // inconvenientes personales/familiares
+  dependencia_alcohol        Boolean    @default(false)  // dependencias de licor
+  
+  // Sección: Drogas Ilegales y Narcotráfico
+  concepto_drogas            String?    @db.Text         // qué entiende por drogas ilegales
+  consume_drogas             Boolean    @default(false)
+  tipo_drogas                String?    @db.Text         // tipo de drogas si consumió
+  involucrado_narcotrafico   Boolean    @default(false)
+  propuestas_narcotrafico    Boolean    @default(false)
+  entorno_drogas             Boolean    @default(false)  // familia o amigos dedicados a esto
+  
+  observaciones              String?    @db.Text
+  entrevista                 Entrevista @relation(fields: [entrevistaId], references: [id], onDelete: Cascade)
+
   @@map("drogas_alcohol")
 }
 
 model Judicial {
-  id                   Int        @id @default(autoincrement())
-  entrevistaId         Int        @unique
-  antecedentes_penales Boolean    @default(false)
-  detalle_penales      String?    @db.Text
-  procesos_judiciales  Boolean    @default(false)
-  detalle_procesos     String?    @db.Text
-  detencion_previa     Boolean    @default(false)
-  detalle_detencion    String?    @db.Text
-  demandas_civiles     Boolean    @default(false)
-  detalle_demandas     String?    @db.Text
-  verificado_sistema   Boolean    @default(false)
-  observaciones        String?    @db.Text
-  entrevista           Entrevista @relation(fields: [entrevistaId], references: [id], onDelete: Cascade)
+  id                                 Int        @id @default(autoincrement())
+  entrevistaId                       Int        @unique
+  
+  interpuesto_demandas               Boolean    @default(false)
+  sido_demandado                     Boolean    @default(false)
+  proceso_judicial                   Boolean    @default(false)
+  
+  detenciones                        Boolean    @default(false)
+  observacion_detenciones            String?    @db.Text
+  
+  familiares_detenidos               Boolean    @default(false)
+  observacion_familiares_detenidos   String?    @db.Text
+  
+  visitado_carcel                    Boolean    @default(false)
+  observacion_visitado_carcel        String?    @db.Text
+  
+  ultima_verificacion_judicial       DateTime?
+  
+  concepto_margen_ley                String?    @db.Text
+  vinculos_margen_ley                String?    @db.Text
+  
+  manipulado_armas                   Boolean    @default(false)
+  motivo_armas                       String?    @db.VarChar(100) // Militar, Deportivo, etc.
+  
+  actividades_fuera_ley              Boolean    @default(false)
+  propuestas_ilegales                Boolean    @default(false)
+  entorno_ilegal_antecedentes        Boolean    @default(false)
+  participacion_actos_ilegales       Boolean    @default(false)
+  
+  observaciones_generales            String?    @db.Text
+
+  entrevista                         Entrevista @relation(fields: [entrevistaId], references: [id], onDelete: Cascade)
+
   @@map("judicial")
 }
 
 model Infiltracion {
-  id                       Int        @id @default(autoincrement())
-  entrevistaId             Int        @unique
-  vinculo_organizaciones   Boolean    @default(false)
-  tipo_organizaciones      String?    @db.Text
-  familiar_implicado       Boolean    @default(false)
-  detalle_familiar         String?    @db.Text
-  contacto_grupos_ilegales Boolean    @default(false)
-  detalle_grupos           String?    @db.Text
-  amenaza_extorsion        Boolean    @default(false)
-  detalle_amenaza          String?    @db.Text
-  observaciones            String?    @db.Text
-  nivel_riesgo             String     @default("BAJO") @db.VarChar(20)
-  entrevista               Entrevista @relation(fields: [entrevistaId], references: [id], onDelete: Cascade)
+  id                         Int        @id @default(autoincrement())
+  entrevistaId               Int        @unique
+  
+  motivacion_ingreso         String?    @db.Text
+  
+  contactos_empresa          Boolean    @default(false)
+  detalle_contactos          String?    @db.Text
+  
+  intencion_ilicitos         Boolean    @default(false)
+  acuerdo_ilicitos           Boolean    @default(false)
+  instrucciones_dano         Boolean    @default(false) // Se usa "dano" sin la "ñ" por seguridad en BD
+  
+  observaciones              String?    @db.Text
+  nivel_riesgo               String     @default("BAJO") @db.VarChar(20)
+
+  entrevista                 Entrevista @relation(fields: [entrevistaId], references: [id], onDelete: Cascade)
+
   @@map("infiltracion")
 }
 

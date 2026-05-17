@@ -70,17 +70,34 @@ entrevistasRouter.get('/:id', async (req: AuthRequest, res: Response): Promise<v
       where: { id: Number(req.params.id) },
       include: {
         entrevistadores: { include: { entrevistador: true }, orderBy: { orden: 'asc' } },
-        datos_personales: true, familia: true, estudios: true,
-        historial_laboral: true, drogas_alcohol: true, judicial: true, infiltracion: true, validaciones: true,
+        datos_personales: true, 
+        familia: true, 
+        estudios: true,
+        drogas_alcohol: true, 
+        judicial: true, 
+        infiltracion: true, 
+        validaciones: true,
         // Traemos finanzas con sus listas anidadas
         finanzas: {
           include: { bienes_inmuebles: true, vehiculos: true, creditos: true, deudas_personales: true, reportes_negativos: true }
         },
+        // Traemos el historial laboral con su tabla anidada de experiencias
+        historial_laboral: {
+          include: { experiencias: true }
+        },
       },
     });
-    if (!entrevista) { res.status(404).json({ success: false, message: 'Entrevista no encontrada' }); return; }
+    
+    if (!entrevista) { 
+      res.status(404).json({ success: false, message: 'Entrevista no encontrada' }); 
+      return; 
+    }
+    
     res.json({ success: true, data: entrevista });
-  } catch (error) { res.status(500).json({ success: false, message: 'Error al obtener entrevista' }); }
+  } catch (error) { 
+    console.error(error);
+    res.status(500).json({ success: false, message: 'Error al obtener entrevista' }); 
+  }
 });
 
 // PUT /api/entrevistas/:id/finanzas
@@ -230,25 +247,42 @@ entrevistasRouter.put('/:id/finanzas', async (req: AuthRequest, res: Response): 
 entrevistasRouter.put('/:id/historial-laboral', async (req: AuthRequest, res: Response): Promise<void> => {
   try {
     const entrevistaId = Number(req.params.id);
-    const { trabajos } = req.body;
+    const { medio_vacante, acto_ilicito, detalle_grave, observaciones, experiencias } = req.body;
 
-    await prisma.historialLaboral.deleteMany({ where: { entrevistaId } });
-    
-    const result = await prisma.historialLaboral.createMany({
-      data: trabajos.map((t: any) => {
-        // Extraemos 'key' e 'id' para que Prisma no intente guardarlos
-        const { key, id, ...datosLimpios } = t;
-        
-        return {
-          ...datosLimpios,
-          entrevistaId
-        };
-      }),
+    // Normalizamos las fechas provenientes del frontend para que SQL Server las procese correctamente
+    const limpiarLista = (arr: any[]) => arr ? arr.map(({ key, id, historialLaboralId, ...rest }) => ({
+      ...rest,
+      fecha_inicio: rest.fecha_inicio ? new Date(rest.fecha_inicio) : new Date(),
+      fecha_fin: rest.fecha_fin ? new Date(rest.fecha_fin) : null,
+    })) : [];
+
+    const resultado = await prisma.historialLaboral.upsert({
+      where: { entrevistaId },
+      update: {
+        medio_vacante,
+        acto_ilicito,
+        detalle_grave,
+        observaciones,
+        experiencias: {
+          deleteMany: {},
+          create: limpiarLista(experiencias) as any
+        }
+      },
+      create: {
+        entrevistaId,
+        medio_vacante,
+        acto_ilicito,
+        detalle_grave,
+        observaciones,
+        experiencias: {
+          create: limpiarLista(experiencias) as any
+        }
+      }
     });
-    
-    res.json({ success: true, data: result });
+
+    res.json({ success: true, data: resultado });
   } catch (error) {
-    console.error(error);
+    console.error('Error al guardar historial laboral:', error);
     res.status(500).json({ success: false, message: 'Error al guardar historial laboral' });
   }
 });
@@ -269,7 +303,7 @@ entrevistasRouter.put('/:id/drogas-alcohol', async (req: AuthRequest, res: Respo
     });
     res.json({ success: true, data: resultado });
   } catch (error) {
-    console.error(error);
+    console.error('Error en drogas/alcohol:', error);
     res.status(500).json({ success: false, message: 'Error al guardar registro de drogas/alcohol' });
   }
 });
@@ -278,19 +312,24 @@ entrevistasRouter.put('/:id/drogas-alcohol', async (req: AuthRequest, res: Respo
 entrevistasRouter.put('/:id/judicial', async (req: AuthRequest, res: Response): Promise<void> => {
   try {
     const entrevistaId = Number(req.params.id);
-    const { id, entrevistaId: _, ...datosLimpios } = req.body;
+    const { id, entrevistaId: _, ultima_verificacion_judicial, ...datosLimpios } = req.body;
+
+    // Convertimos la fecha si existe, de lo contrario la dejamos nula
+    const dataToSave = {
+      ...datosLimpios,
+      ultima_verificacion_judicial: ultima_verificacion_judicial ? new Date(ultima_verificacion_judicial) : null,
+      entrevistaId
+    };
 
     const resultado = await prisma.judicial.upsert({
       where: { entrevistaId },
-      update: datosLimpios,
-      create: { 
-        ...datosLimpios, 
-        entrevistaId 
-      },
+      update: dataToSave,
+      create: dataToSave,
     });
+    
     res.json({ success: true, data: resultado });
   } catch (error) {
-    console.error(error);
+    console.error('Error en Judicial:', error);
     res.status(500).json({ success: false, message: 'Error al guardar antecedentes judiciales' });
   }
 });
