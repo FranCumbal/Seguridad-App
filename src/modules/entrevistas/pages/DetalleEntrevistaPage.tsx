@@ -16,7 +16,7 @@ import DrogasAlcoholTab from '../components/tabs/DrogasAlcoholTab';
 import JudicialTab from '../components/tabs/JudicialTab';
 import InfiltracionTab from '../components/tabs/InfiltracionTab';
 import ValidacionesTab from '../components/tabs/ValidacionesTab';
-import { generarPDFEntrevista } from '@/shared/utils/pdf';
+import { generarInformePDF } from '@/shared/utils/pdf';
 
 const { Title, Text } = Typography;
 const API_URL = import.meta.env.VITE_API_URL?.replace('/api', '') || 'http://localhost:3001';
@@ -119,7 +119,7 @@ export default function DetalleEntrevistaPage() {
           </Space>
           <Button
             icon={<FilePdfOutlined />}
-            onClick={() => generarPDFEntrevista(entrevista)}
+            onClick={() => generarInformePDF(entrevista)}
             style={{ background: 'rgba(63,185,80,0.1)', border: '1px solid rgba(63,185,80,0.2)', color: '#3fb950', height: 38 }}
           >
             Generar PDF

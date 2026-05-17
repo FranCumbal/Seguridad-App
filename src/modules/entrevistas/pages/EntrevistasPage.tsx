@@ -9,7 +9,7 @@ import {
   FilePdfOutlined, ReloadOutlined,
 } from '@ant-design/icons';
 import { entrevistasApi } from '@/infrastructure/api/services';
-import { generarPDFEntrevista } from '@/shared/utils/pdf';
+import { generarInformePDF } from '@/shared/utils/pdf';
 
 const { Title, Text } = Typography;
 const { Option } = Select;
@@ -91,7 +91,7 @@ export default function EntrevistasPage() {
   const handlePDF = async (record: any) => {
     try {
       const res = await entrevistasApi.getById(record.id);
-      generarPDFEntrevista(res.data.data);
+      generarInformePDF(res.data.data);
     } catch { message.error('Error al generar PDF'); }
   };
 
