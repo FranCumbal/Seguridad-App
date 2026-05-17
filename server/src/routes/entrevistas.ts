@@ -63,67 +63,58 @@ entrevistasRouter.get('/', async (req: AuthRequest, res: Response): Promise<void
   }
 });
 
-// GET /api/entrevistas/:id (completa)
+// GET /api/entrevistas/:id (completa actualizada)
 entrevistasRouter.get('/:id', async (req: AuthRequest, res: Response): Promise<void> => {
   try {
     const entrevista = await prisma.entrevista.findUnique({
       where: { id: Number(req.params.id) },
       include: {
-        entrevistadores: {
-          include: { entrevistador: true },
-          orderBy: { orden: 'asc' },
+        entrevistadores: { include: { entrevistador: true }, orderBy: { orden: 'asc' } },
+        datos_personales: true, familia: true, estudios: true,
+        historial_laboral: true, drogas_alcohol: true, judicial: true, infiltracion: true, validaciones: true,
+        // Traemos finanzas con sus listas anidadas
+        finanzas: {
+          include: { bienes_inmuebles: true, vehiculos: true, creditos: true, deudas_personales: true, reportes_negativos: true }
         },
-        datos_personales: true,
-        familia: true,
-        estudios: true,
-        finanzas: true,
-        historial_laboral: true,
-        drogas_alcohol: true,
-        judicial: true,
-        infiltracion: true,
-        validaciones: true,
       },
     });
-    if (!entrevista) {
-      res.status(404).json({ success: false, message: 'Entrevista no encontrada' });
-      return;
-    }
+    if (!entrevista) { res.status(404).json({ success: false, message: 'Entrevista no encontrada' }); return; }
     res.json({ success: true, data: entrevista });
-  } catch (error) {
-    res.status(500).json({ success: false, message: 'Error al obtener entrevista' });
-  }
+  } catch (error) { res.status(500).json({ success: false, message: 'Error al obtener entrevista' }); }
 });
 
-// POST /api/entrevistas (crear nueva)
-entrevistasRouter.post('/', async (req: AuthRequest, res: Response): Promise<void> => {
+// PUT /api/entrevistas/:id/finanzas
+entrevistasRouter.put('/:id/finanzas', async (req: AuthRequest, res: Response): Promise<void> => {
   try {
-    const { entrevistadorIds, observaciones_iniciales } = req.body;
+    const entrevistaId = Number(req.params.id);
+    const { id, entrevistaId: _, bienes_inmuebles, vehiculos, creditos, deudas_personales, reportes_negativos, ...datosLimpios } = req.body;
 
-    if (!entrevistadorIds || entrevistadorIds.length < 1 || entrevistadorIds.length > 3) {
-      res.status(400).json({ success: false, message: 'Se requieren entre 1 y 3 entrevistadores' });
-      return;
-    }
+    const limpiarLista = (arr: any[]) => arr ? arr.map(({ key, id, finanzasId, ...rest }) => rest) : [];
 
-    const entrevista = await prisma.entrevista.create({
-      data: {
-        codigo: generarCodigo(),
-        observaciones_iniciales,
-        entrevistadores: {
-          create: entrevistadorIds.map((id: number, idx: number) => ({
-            entrevistadorId: id,
-            orden: idx + 1,
-          })),
-        },
+    const resultado = await prisma.finanzas.upsert({
+      where: { entrevistaId },
+      update: {
+        ...datosLimpios,
+        bienes_inmuebles: { deleteMany: {}, create: limpiarLista(bienes_inmuebles) as any },
+        vehiculos: { deleteMany: {}, create: limpiarLista(vehiculos) as any },
+        creditos: { deleteMany: {}, create: limpiarLista(creditos) as any },
+        deudas_personales: { deleteMany: {}, create: limpiarLista(deudas_personales) as any },
+        reportes_negativos: { deleteMany: {}, create: limpiarLista(reportes_negativos) as any },
       },
-      include: {
-        entrevistadores: { include: { entrevistador: true } },
+      create: {
+        ...datosLimpios,
+        entrevistaId,
+        bienes_inmuebles: { create: limpiarLista(bienes_inmuebles) as any },
+        vehiculos: { create: limpiarLista(vehiculos) as any },
+        creditos: { create: limpiarLista(creditos) as any },
+        deudas_personales: { create: limpiarLista(deudas_personales) as any },
+        reportes_negativos: { create: limpiarLista(reportes_negativos) as any },
       },
     });
-
-    res.status(201).json({ success: true, data: entrevista });
+    res.json({ success: true, data: resultado });
   } catch (error) {
     console.error(error);
-    res.status(500).json({ success: false, message: 'Error al crear entrevista' });
+    res.status(500).json({ success: false, message: 'Error al guardar finanzas' });
   }
 });
 
@@ -153,25 +144,36 @@ entrevistasRouter.put('/:id/datos-personales', async (req: AuthRequest, res: Res
 entrevistasRouter.put('/:id/familia', async (req: AuthRequest, res: Response): Promise<void> => {
   try {
     const entrevistaId = Number(req.params.id);
-    const { miembros } = req.body;
+    const { conviveCon, calificacionFamilia, familiares } = req.body;
+
+    await prisma.entrevista.update({
+      where: { id: entrevistaId },
+      data: {
+        conviveCon: conviveCon,
+        calificacionFamilia: calificacionFamilia
+      }
+    });
 
     await prisma.familia.deleteMany({ where: { entrevistaId } });
     
-    const familia = await prisma.familia.createMany({
-      data: miembros.map((m: any) => {
-        // Extraemos 'key' y 'id' para que no se envíen a la base de datos
-        const { key, id, ...datosLimpios } = m;
-        
-        return { 
-          ...datosLimpios, 
-          entrevistaId 
-        };
-      }),
-    });
+    let resultado: any = null; 
     
-    res.json({ success: true, data: familia });
+    if (familiares && familiares.length > 0) {
+      resultado = await prisma.familia.createMany({
+        data: familiares.map((f: any) => {
+          const { key, id, ...datosLimpios } = f;
+          
+          return { 
+            ...datosLimpios, 
+            entrevistaId 
+          };
+        }),
+      });
+    }
+    
+    res.json({ success: true, data: resultado });
   } catch (error) {
-    console.error(error); // Te recomiendo agregar esto para ver el error real en la consola si algo más falla
+    console.error('Error en ruta familia:', error);
     res.status(500).json({ success: false, message: 'Error al guardar familia' });
   }
 });

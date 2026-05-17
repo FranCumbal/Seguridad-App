@@ -22,7 +22,7 @@ model Usuario {
   // Relaciones
   sesiones      Sesion[]
   auditoria     Auditoria[]
-  entrevistas   Entrevista[] // <-- Esta es la línea que Prisma estaba pidiendo
+  entrevistas   Entrevista[]
 
   @@map("usuarios")
 }
@@ -38,24 +38,30 @@ model Sesion {
 }
 
 model Entrevistador {
-  id              Int      @id @default(autoincrement())
-  nombre_completo String   @db.VarChar(200)
-  cargo           String   @db.VarChar(150)
-  fotografia      String?  @db.VarChar(500)
-  activo          Boolean  @default(true)
-  createdAt       DateTime @default(now())
-  updatedAt       DateTime @updatedAt
+  id                    Int      @id @default(autoincrement())
+  nombre_completo       String   @db.VarChar(200)
+  cargo                 String   @db.VarChar(150)
+  fotografia            String?  @db.VarChar(500)
+  activo                Boolean  @default(true)
+  createdAt             DateTime @default(now())
+  updatedAt             DateTime @updatedAt
   entrevistas_asignadas EntrevistaEntrevistador[]
   @@map("entrevistadores")
 }
 
 model Entrevista {
   id                      Int      @id @default(autoincrement())
-  codigo                  String   @unique @db.VarChar(50) // Aquí guardaremos "0002"
-  usuarioId               Int?     // Relación con el usuario que creó/gestiona el expediente
+  codigo                  String   @unique @db.VarChar(50)
+  usuarioId               Int?     
   estado                  String   @default("EN_PROCESO") @db.VarChar(50)
   observaciones_iniciales String?  @db.Text
   fecha_entrevista        DateTime @default(now())
+  
+  // --- NUEVOS CAMPOS DEL MÓDULO FAMILIA ---
+  conviveCon              String?  @db.VarChar(500) // Guardará el arreglo convertido a texto ej: "Padres,Hermanos"
+  calificacionFamilia     String?  @db.VarChar(100) // Guardará "Unida", "Estable", etc.
+  // ----------------------------------------
+
   createdAt               DateTime @default(now())
   updatedAt               DateTime @updatedAt
   
@@ -119,7 +125,7 @@ model Familia {
   id              Int        @id @default(autoincrement())
   entrevistaId    Int
   tipo_parentesco String     @db.VarChar(100)
-  nombres         String     @db.VarChar(200)
+  nombres         String?    @db.VarChar(200) // <-- CAMBIADO A OPCIONAL (?)
   edad            Int?
   ocupacion       String?    @db.VarChar(200)
   lugar_trabajo   String?    @db.VarChar(200)
@@ -135,33 +141,82 @@ model Estudio {
   nivel           String     @db.VarChar(100)
   institucion     String     @db.VarChar(200)
   titulo_obtenido String?    @db.VarChar(200)
-  anio_inicio     Int?
-  anio_fin        Int?
   estado          String?    @db.VarChar(50)
   ciudad          String?    @db.VarChar(100)
   verificado      Boolean    @default(false)
   observaciones   String?    @db.Text
   entrevista      Entrevista @relation(fields: [entrevistaId], references: [id], onDelete: Cascade)
+
   @@map("estudios")
 }
 
 model Finanzas {
-  id                 Int        @id @default(autoincrement())
-  entrevistaId       Int        @unique
-  ingresos_mensuales Decimal?   @db.Decimal(10, 2)
-  egresos_mensuales  Decimal?   @db.Decimal(10, 2)
-  deudas_actuales    Boolean    @default(false)
-  monto_deudas       Decimal?   @db.Decimal(10, 2)
-  tipo_deudas        String?    @db.Text
-  tiene_bienes       Boolean    @default(false)
-  descripcion_bienes String?    @db.Text
-  score_crediticio   String?    @db.VarChar(50)
-  buro_credito       String?    @db.VarChar(50)
-  demandas_coactivas Boolean    @default(false)
-  detalle_coactivas  String?    @db.Text
-  observaciones      String?    @db.Text
-  entrevista         Entrevista @relation(fields: [entrevistaId], references: [id], onDelete: Cascade)
+  id                         Int        @id @default(autoincrement())
+  entrevistaId               Int        @unique
+  ingresos_mensuales         Decimal?   @db.Decimal(10, 2)
+  egresos_mensuales          Decimal?   @db.Decimal(10, 2)
+  tiene_bienes_inmuebles     Boolean    @default(false)
+  tiene_vehiculos            Boolean    @default(false)
+  tiene_creditos             Boolean    @default(false)
+  tiene_deudas_personales    Boolean    @default(false)
+  tiene_reportes_negativos   Boolean    @default(false)
+  observaciones              String?    @db.Text
+  entrevista                 Entrevista @relation(fields: [entrevistaId], references: [id], onDelete: Cascade)
+
+  // Relaciones 1-a-Muchos
+  bienes_inmuebles           BienInmueble[]
+  vehiculos                  Vehiculo[]
+  creditos                   Credito[]
+  deudas_personales          DeudaPersonal[]
+  reportes_negativos         ReporteNegativo[]
+
   @@map("finanzas")
+}
+
+model BienInmueble {
+  id          Int      @id @default(autoincrement())
+  finanzasId  Int
+  tipo        String   @db.VarChar(100)
+  valor       Decimal  @db.Decimal(10, 2)
+  finanzas    Finanzas @relation(fields: [finanzasId], references: [id], onDelete: Cascade)
+  @@map("finanzas_bienes")
+}
+
+model Vehiculo {
+  id          Int      @id @default(autoincrement())
+  finanzasId  Int
+  tipo        String   @db.VarChar(50)
+  placa       String   @db.VarChar(20)
+  modelo      String   @db.VarChar(100)
+  finanzas    Finanzas @relation(fields: [finanzasId], references: [id], onDelete: Cascade)
+  @@map("finanzas_vehiculos")
+}
+
+model Credito {
+  id          Int      @id @default(autoincrement())
+  finanzasId  Int
+  entidad     String   @db.VarChar(200)
+  monto       Decimal  @db.Decimal(10, 2)
+  finanzas    Finanzas @relation(fields: [finanzasId], references: [id], onDelete: Cascade)
+  @@map("finanzas_creditos")
+}
+
+model DeudaPersonal {
+  id          Int      @id @default(autoincrement())
+  finanzasId  Int
+  detalle     String   @db.Text
+  monto       Decimal  @db.Decimal(10, 2)
+  finanzas    Finanzas @relation(fields: [finanzasId], references: [id], onDelete: Cascade)
+  @@map("finanzas_deudas")
+}
+
+model ReporteNegativo {
+  id          Int      @id @default(autoincrement())
+  finanzasId  Int
+  detalle     String   @db.Text
+  monto       Decimal  @db.Decimal(10, 2)
+  finanzas    Finanzas @relation(fields: [finanzasId], references: [id], onDelete: Cascade)
+  @@map("finanzas_reportes")
 }
 
 model HistorialLaboral {

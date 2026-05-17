@@ -58,8 +58,10 @@ export const entrevistasApi = {
   saveDatosPersonales: (id: number, data: any) =>
     apiClient.put(`/entrevistas/${id}/datos-personales`, data),
 
-  saveFamilia: (id: number, miembros: any[]) =>
-    apiClient.put(`/entrevistas/${id}/familia`, { miembros }),
+  // Dentro de const entrevistasApi = { ...
+  
+  saveFamilia: (id: number, payload: any) =>
+    apiClient.put(`/entrevistas/${id}/familia`, payload),
 
   saveEstudios: (id: number, estudios: any[]) =>
     apiClient.put(`/entrevistas/${id}/estudios`, { estudios }),
