@@ -80,7 +80,7 @@ export default function MainLayout() {
           </div>
           {!collapsed && (
             <div className="sidebar-brand-text">
-              <span className="sidebar-brand-name">Prompt Maestro</span>
+              <span className="sidebar-brand-name">Seguridad App</span>
               <span className="sidebar-brand-sub">Seguridad Empresarial</span>
             </div>
           )}

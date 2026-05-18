@@ -1,4 +1,4 @@
-# 🛡️ Prompt Maestro
+# 🛡️ Seguridad App
 ## Sistema Empresarial de Entrevistas de Seguridad y Validación de Personal
 
 ---

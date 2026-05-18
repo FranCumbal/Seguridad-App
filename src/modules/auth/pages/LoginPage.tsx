@@ -47,7 +47,7 @@ export default function LoginPage() {
             <SafetyOutlined style={{ fontSize: 28, color: 'white' }} />
           </div>
           <Title level={2} style={{ color: '#e6edf3', margin: 0, fontWeight: 700, fontSize: 26, letterSpacing: '-0.02em' }}>
-            Prompt Maestro
+            Seguridad App
           </Title>
           <Paragraph style={{ color: '#6e7681', marginTop: 6, fontSize: 13, marginBottom: 0 }}>
             Sistema de Entrevistas de Seguridad Empresarial
@@ -121,7 +121,7 @@ export default function LoginPage() {
 
         <div style={{ textAlign: 'center' }}>
           <Text style={{ fontSize: 11, color: '#484f58' }}>
-            Prompt Maestro v1.0.0 — Uso exclusivo empresarial
+            Seguridad App v1.0.0 — Uso exclusivo empresarial
           </Text>
         </div>
       </div>

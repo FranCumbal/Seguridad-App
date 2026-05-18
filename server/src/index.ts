@@ -68,7 +68,7 @@ app.use((err: any, _req: express.Request, res: express.Response, _next: express.
 app.listen(PORT, () => {
   console.log(`
   ╔══════════════════════════════════════════╗
-  ║     PROMPT MAESTRO — API SERVER          ║
+  ║     SEGURIDAD APP — API SERVER          ║
   ║     Puerto: ${PORT}                        ║
   ║     Entorno: ${process.env.NODE_ENV}     ║
   ╚══════════════════════════════════════════╝
