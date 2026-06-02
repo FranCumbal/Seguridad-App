@@ -15,19 +15,18 @@ const { Title, Text } = Typography;
 const { Option } = Select;
 
 const estadoMap: Record<string, { color: string; label: string }> = {
-  EN_PROCESO:  { color: '#a78bfa', label: 'En Proceso' },
-  COMPLETADA:  { color: '#3fb950', label: 'Completada' },
-  ARCHIVADA:   { color: '#8b949e', label: 'Archivada'  },
-  CANCELADA:   { color: '#f85149', label: 'Cancelada'  },
+  EN_PROCESO:  { color: '#6d28d9', label: 'En Proceso' },
+  COMPLETADA:  { color: '#15803d', label: 'Completada' },
+  ARCHIVADA:   { color: '#595959', label: 'Archivada'  },
+  CANCELADA:   { color: '#b91c1c', label: 'Cancelada'  },
 };
 const resultadoMap: Record<string, { color: string; label: string }> = {
-  PENDIENTE:   { color: '#d29922', label: 'Pendiente'   },
-  APROBADO:    { color: '#3fb950', label: 'Aprobado'    },
-  RECHAZADO:   { color: '#f85149', label: 'Rechazado'   },
-  CONDICIONAL: { color: '#58a6ff', label: 'Condicional' },
+  PENDIENTE:   { color: '#d97706', label: 'Pendiente'   },
+  APROBADO:    { color: '#15803d', label: 'Aprobado'    },
+  RECHAZADO:   { color: '#b91c1c', label: 'Rechazado'   },
+  CONDICIONAL: { color: '#1677ff', label: 'Condicional' },
 };
 
-// Debounce hook simple
 function useDebounce(fn: (...args: any[]) => void, delay: number) {
   const timer = useRef<ReturnType<typeof setTimeout>>();
   return useCallback((...args: any[]) => {
@@ -101,22 +100,22 @@ export default function EntrevistasPage() {
       dataIndex: 'codigo',
       width: 155,
       render: (v: string) => (
-        <Text style={{ fontFamily: 'IBM Plex Mono', fontSize: 12, color: '#58a6ff', fontWeight: 500 }}>{v}</Text>
+        <Text style={{ fontFamily: 'IBM Plex Mono', fontSize: 12, color: '#1677ff', fontWeight: 500 }}>{v}</Text>
       ),
     },
     {
       title: 'Candidato',
       render: (_: any, r: any) => r.datos_personales ? (
         <div>
-          <Text strong style={{ color: '#e6edf3', fontSize: 13 }}>
+          <Text strong style={{ color: '#262626', fontSize: 13 }}>
             {r.datos_personales.nombres} {r.datos_personales.apellidos}
           </Text>
           <br />
-          <Text style={{ fontSize: 11, color: '#6e7681' }}>
+          <Text style={{ fontSize: 11, color: '#8c8c8c' }}>
             CI: {r.datos_personales.cedula} · {r.datos_personales.cargo_postula || 'Sin cargo'}
           </Text>
         </div>
-      ) : <Text style={{ color: '#484f58', fontSize: 12 }}>Sin datos personales</Text>,
+      ) : <Text style={{ color: '#bfbfbf', fontSize: 12 }}>Sin datos personales</Text>,
     },
     {
       title: 'Entrevistadores',
@@ -124,7 +123,7 @@ export default function EntrevistasPage() {
         <Space size={4} wrap>
           {r.entrevistadores?.map((ee: any) => (
             <Tag key={ee.entrevistadorId} style={{
-              background: 'rgba(22,119,255,0.1)', color: '#58a6ff',
+              background: 'rgba(22,119,255,0.08)', color: '#1677ff',
               border: '1px solid rgba(22,119,255,0.2)', fontSize: 11, borderRadius: 6,
             }}>
               {ee.entrevistador.nombre_completo.split(' ')[0]}
@@ -138,9 +137,9 @@ export default function EntrevistasPage() {
       dataIndex: 'estado',
       width: 130,
       render: (v: string) => {
-        const cfg = estadoMap[v] || { color: '#8b949e', label: v };
+        const cfg = estadoMap[v] || { color: '#595959', label: v };
         return (
-          <Tag style={{ background: `${cfg.color}1a`, color: cfg.color, border: `1px solid ${cfg.color}4d`, borderRadius: 6, fontSize: 11, fontWeight: 500 }}>
+          <Tag style={{ background: `${cfg.color}15`, color: cfg.color, border: `1px solid ${cfg.color}40`, borderRadius: 6, fontSize: 11, fontWeight: 500 }}>
             {cfg.label}
           </Tag>
         );
@@ -151,10 +150,10 @@ export default function EntrevistasPage() {
       width: 120,
       render: (_: any, r: any) => {
         const res = r.validaciones?.resultado_general;
-        if (!res) return <Text style={{ color: '#484f58', fontSize: 12 }}>—</Text>;
-        const cfg = resultadoMap[res] || { color: '#8b949e', label: res };
+        if (!res) return <Text style={{ color: '#bfbfbf', fontSize: 12 }}>—</Text>;
+        const cfg = resultadoMap[res] || { color: '#595959', label: res };
         return (
-          <Tag style={{ background: `${cfg.color}1a`, color: cfg.color, border: `1px solid ${cfg.color}4d`, borderRadius: 6, fontSize: 11, fontWeight: 500 }}>
+          <Tag style={{ background: `${cfg.color}15`, color: cfg.color, border: `1px solid ${cfg.color}40`, borderRadius: 6, fontSize: 11, fontWeight: 500 }}>
             {cfg.label}
           </Tag>
         );
@@ -165,7 +164,7 @@ export default function EntrevistasPage() {
       dataIndex: 'fecha_entrevista',
       width: 105,
       render: (v: string) => (
-        <Text style={{ fontSize: 12, color: '#8b949e' }}>
+        <Text style={{ fontSize: 12, color: '#8c8c8c' }}>
           {new Date(v).toLocaleDateString('es-ES')}
         </Text>
       ),
@@ -178,19 +177,18 @@ export default function EntrevistasPage() {
           <Tooltip title="Ver / Editar">
             <Button size="small" icon={<EyeOutlined />}
               onClick={() => navigate(`/entrevistas/${r.id}`)}
-              style={{ background: 'rgba(22,119,255,0.1)', border: '1px solid rgba(22,119,255,0.2)', color: '#58a6ff' }}
+              style={{ background: 'rgba(22,119,255,0.08)', border: '1px solid rgba(22,119,255,0.2)', color: '#1677ff' }}
             />
           </Tooltip>
           <Tooltip title="Generar PDF">
             <Button size="small" icon={<FilePdfOutlined />}
               onClick={() => handlePDF(r)}
-              style={{ background: 'rgba(63,185,80,0.1)', border: '1px solid rgba(63,185,80,0.2)', color: '#3fb950' }}
+              style={{ background: 'rgba(82,196,26,0.08)', border: '1px solid rgba(82,196,26,0.2)', color: '#15803d' }}
             />
           </Tooltip>
           <Tooltip title="Eliminar">
             <Button size="small" danger icon={<DeleteOutlined />}
               onClick={() => handleDelete(r)}
-              style={{ background: 'rgba(248,81,73,0.1)', border: '1px solid rgba(248,81,73,0.2)' }}
             />
           </Tooltip>
         </Space>
@@ -202,10 +200,10 @@ export default function EntrevistasPage() {
     <div className="page-container fade-in-up">
       <div className="page-header">
         <div>
-          <Title level={3} style={{ color: '#e6edf3', margin: 0, fontWeight: 700, fontSize: 22 }}>
+          <Title level={3} style={{ color: '#262626', margin: 0, fontWeight: 700, fontSize: 22 }}>
             Entrevistas
           </Title>
-          <Text style={{ color: '#6e7681', fontSize: 13 }}>
+          <Text style={{ color: '#8c8c8c', fontSize: 13 }}>
             {total} entrevista{total !== 1 ? 's' : ''} registrada{total !== 1 ? 's' : ''}
           </Text>
         </div>
@@ -223,9 +221,9 @@ export default function EntrevistasPage() {
         <Col xs={24} md={12}>
           <Input
             placeholder="Buscar por nombre, cédula, código..."
-            prefix={<SearchOutlined style={{ color: '#484f58' }} />}
+            prefix={<SearchOutlined style={{ color: '#bfbfbf' }} />}
             onChange={(e) => debouncedSearch(e.target.value)}
-            style={{ background: '#1c2128', borderColor: '#30363d', color: '#e6edf3', height: 38 }}
+            style={{ height: 38 }}
             allowClear
           />
         </Col>
@@ -240,7 +238,7 @@ export default function EntrevistasPage() {
         </Col>
         <Col xs={12} md={6}>
           <Button icon={<ReloadOutlined />} onClick={() => fetchEntrevistas(1, search, estado)}
-            style={{ background: '#21262d', border: '1px solid #30363d', color: '#8b949e', height: 38, width: '100%' }}>
+            style={{ height: 38, width: '100%' }}>
             Actualizar
           </Button>
         </Col>
@@ -249,12 +247,12 @@ export default function EntrevistasPage() {
       <div className="app-card" style={{ padding: 0, overflow: 'hidden' }}>
         <Table
           dataSource={data} columns={columns} rowKey="id" loading={loading} size="middle"
-          locale={{ emptyText: <Empty description={<Text style={{ color: '#484f58' }}>Sin entrevistas registradas</Text>} style={{ padding: '32px 0' }} /> }}
+          locale={{ emptyText: <Empty description={<Text style={{ color: '#8c8c8c' }}>Sin entrevistas registradas</Text>} style={{ padding: '32px 0' }} /> }}
           pagination={{
             current: page, total, pageSize: 15,
             onChange: (p) => { setPage(p); fetchEntrevistas(p, search, estado); },
             showSizeChanger: false,
-            showTotal: (t) => <Text style={{ color: '#6e7681', fontSize: 12 }}>Total: {t}</Text>,
+            showTotal: (t) => <Text style={{ color: '#8c8c8c', fontSize: 12 }}>Total: {t}</Text>,
             style: { padding: '12px 16px' },
           }}
         />

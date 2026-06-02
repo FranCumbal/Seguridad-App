@@ -324,11 +324,14 @@ model Infiltracion {
   intencion_ilicitos         Boolean    @default(false)
   acuerdo_ilicitos           Boolean    @default(false)
   instrucciones_dano         Boolean    @default(false) // Se usa "dano" sin la "ñ" por seguridad en BD
-  
+
+  tiene_tatuajes             Boolean    @default(false)
+
   observaciones              String?    @db.Text
   nivel_riesgo               String     @default("BAJO") @db.VarChar(20)
 
   entrevista                 Entrevista @relation(fields: [entrevistaId], references: [id], onDelete: Cascade)
+  tatuajes                   Tatuaje[]
 
   @@map("infiltracion")
 }
@@ -346,6 +349,16 @@ model Validaciones {
   fecha_validacion        DateTime?
   entrevista              Entrevista @relation(fields: [entrevistaId], references: [id], onDelete: Cascade)
   @@map("validaciones")
+}
+
+model Tatuaje {
+  id             Int          @id @default(autoincrement())
+  infiltracionId Int
+  descripcion    String?      @db.Text
+  fotografia     String?      @db.VarChar(500)
+  infiltracion   Infiltracion @relation(fields: [infiltracionId], references: [id], onDelete: Cascade)
+
+  @@map("tatuajes")
 }
 
 model Auditoria {

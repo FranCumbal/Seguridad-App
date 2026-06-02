@@ -9,7 +9,7 @@ import {
 } from '@ant-design/icons';
 import { entrevistadoresApi, entrevistasApi } from '@/infrastructure/api/services';
 
-const { Title, Text, Paragraph } = Typography;
+const { Title, Text } = Typography;
 const { TextArea } = Input;
 const API_URL = import.meta.env.VITE_API_URL?.replace('/api', '') || 'http://localhost:3001';
 
@@ -64,13 +64,12 @@ export default function NuevaEntrevistaPage() {
           <Button
             icon={<ArrowLeftOutlined />}
             onClick={() => navigate('/entrevistas')}
-            style={{ background: '#21262d', border: '1px solid #30363d', color: '#8b949e' }}
           />
           <div>
-            <Title level={3} style={{ color: '#e6edf3', margin: 0, fontWeight: 700, fontSize: 22 }}>
+            <Title level={3} style={{ color: '#262626', margin: 0, fontWeight: 700, fontSize: 22 }}>
               Nueva Entrevista
             </Title>
-            <Text style={{ color: '#6e7681', fontSize: 13 }}>
+            <Text style={{ color: '#8c8c8c', fontSize: 13 }}>
               Selecciona los entrevistadores para esta sesión
             </Text>
           </div>
@@ -80,12 +79,12 @@ export default function NuevaEntrevistaPage() {
       {/* Entrevistadores seleccionados */}
       <div className="app-card" style={{ padding: 24, marginBottom: 20 }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 16 }}>
-          <TeamOutlined style={{ color: '#58a6ff', fontSize: 18 }} />
+          <TeamOutlined style={{ color: '#1677ff', fontSize: 18 }} />
           <div>
-            <Text style={{ color: '#e6edf3', fontWeight: 600, fontSize: 15 }}>
+            <Text style={{ color: '#262626', fontWeight: 600, fontSize: 15 }}>
               Entrevistadores Seleccionados
             </Text>
-            <Text style={{ color: '#6e7681', fontSize: 12, marginLeft: 12 }}>
+            <Text style={{ color: '#8c8c8c', fontSize: 12, marginLeft: 12 }}>
               ({selected.length}/3)
             </Text>
           </div>
@@ -93,10 +92,10 @@ export default function NuevaEntrevistaPage() {
 
         {selected.length === 0 ? (
           <div style={{
-            background: '#1c2128', borderRadius: 10, padding: '20px', textAlign: 'center',
-            border: '1px dashed #30363d',
+            background: '#fafafa', borderRadius: 10, padding: '20px', textAlign: 'center',
+            border: '1px dashed #d9d9d9',
           }}>
-            <Text style={{ color: '#484f58', fontSize: 13 }}>
+            <Text style={{ color: '#bfbfbf', fontSize: 13 }}>
               No has seleccionado ningún entrevistador aún
             </Text>
           </div>
@@ -108,7 +107,7 @@ export default function NuevaEntrevistaPage() {
               return (
                 <div key={id} style={{
                   display: 'flex', alignItems: 'center', gap: 10,
-                  background: 'rgba(22,119,255,0.08)', borderRadius: 10,
+                  background: 'rgba(22,119,255,0.06)', borderRadius: 10,
                   border: '1px solid rgba(22,119,255,0.2)', padding: '10px 14px',
                   cursor: 'pointer', transition: 'all 0.2s',
                 }} onClick={() => toggleSelect(id)}>
@@ -123,12 +122,12 @@ export default function NuevaEntrevistaPage() {
                     <Avatar size={32} icon={<UserOutlined />} style={{ background: '#1677ff' }} />
                   )}
                   <div>
-                    <Text style={{ color: '#58a6ff', fontSize: 13, fontWeight: 500, display: 'block' }}>
+                    <Text style={{ color: '#1677ff', fontSize: 13, fontWeight: 500, display: 'block' }}>
                       {e.nombre_completo}
                     </Text>
-                    <Text style={{ color: '#6e7681', fontSize: 11 }}>{e.cargo}</Text>
+                    <Text style={{ color: '#8c8c8c', fontSize: 11 }}>{e.cargo}</Text>
                   </div>
-                  <CheckCircleFilled style={{ color: '#3fb950', fontSize: 14, marginLeft: 4 }} />
+                  <CheckCircleFilled style={{ color: '#15803d', fontSize: 14, marginLeft: 4 }} />
                 </div>
               );
             })}
@@ -138,7 +137,7 @@ export default function NuevaEntrevistaPage() {
 
       {/* Lista de entrevistadores */}
       <div className="app-card" style={{ padding: 24, marginBottom: 20 }}>
-        <Text style={{ color: '#8b949e', fontSize: 13, fontWeight: 600, textTransform: 'uppercase',
+        <Text style={{ color: '#8c8c8c', fontSize: 13, fontWeight: 600, textTransform: 'uppercase',
           letterSpacing: '0.06em', display: 'block', marginBottom: 16 }}>
           Equipo de Entrevistadores
         </Text>
@@ -157,8 +156,8 @@ export default function NuevaEntrevistaPage() {
                   onClick={() => toggleSelect(e.id)}
                   style={{
                     display: 'flex', alignItems: 'center', gap: 12,
-                    background: isSelected ? 'rgba(22,119,255,0.12)' : '#1c2128',
-                    border: isSelected ? '1px solid rgba(22,119,255,0.4)' : '1px solid #30363d',
+                    background: isSelected ? 'rgba(22,119,255,0.06)' : '#fafafa',
+                    border: isSelected ? '1px solid rgba(22,119,255,0.3)' : '1px solid #f0f0f0',
                     borderRadius: 10, padding: '12px 14px', cursor: 'pointer',
                     transition: 'all 0.2s',
                   }}
@@ -168,17 +167,17 @@ export default function NuevaEntrevistaPage() {
                     <Avatar size={40} src={`${API_URL}${e.fotografia}`} />
                   ) : (
                     <Avatar size={40} icon={<UserOutlined />}
-                      style={{ background: isSelected ? '#1677ff' : '#21262d', flexShrink: 0 }} />
+                      style={{ background: isSelected ? '#1677ff' : '#d9d9d9', flexShrink: 0 }} />
                   )}
                   <div style={{ overflow: 'hidden', minWidth: 0 }}>
                     <Text style={{
-                      color: isSelected ? '#58a6ff' : '#e6edf3',
+                      color: isSelected ? '#1677ff' : '#262626',
                       fontSize: 13, fontWeight: 500, display: 'block',
                       overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
                     }}>
                       {e.nombre_completo}
                     </Text>
-                    <Text style={{ color: '#6e7681', fontSize: 11 }}>{e.cargo}</Text>
+                    <Text style={{ color: '#8c8c8c', fontSize: 11 }}>{e.cargo}</Text>
                   </div>
                 </div>
               );
@@ -189,7 +188,7 @@ export default function NuevaEntrevistaPage() {
 
       {/* Observaciones iniciales */}
       <div className="app-card" style={{ padding: 24, marginBottom: 24 }}>
-        <Text style={{ color: '#8b949e', fontSize: 13, fontWeight: 600, textTransform: 'uppercase',
+        <Text style={{ color: '#8c8c8c', fontSize: 13, fontWeight: 600, textTransform: 'uppercase',
           letterSpacing: '0.06em', display: 'block', marginBottom: 12 }}>
           Observaciones Iniciales
         </Text>
@@ -198,7 +197,7 @@ export default function NuevaEntrevistaPage() {
           placeholder="Observaciones previas a la entrevista (opcional)..."
           value={observaciones}
           onChange={(e) => setObservaciones(e.target.value)}
-          style={{ background: '#1c2128', borderColor: '#30363d', color: '#e6edf3', resize: 'vertical' }}
+          style={{ resize: 'vertical' }}
         />
       </div>
 
@@ -207,7 +206,7 @@ export default function NuevaEntrevistaPage() {
         <Button
           icon={<ArrowLeftOutlined />}
           onClick={() => navigate('/entrevistas')}
-          style={{ background: '#21262d', border: '1px solid #30363d', color: '#8b949e', height: 40 }}
+          style={{ height: 40 }}
         >
           Cancelar
         </Button>

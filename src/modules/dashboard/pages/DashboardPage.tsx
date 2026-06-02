@@ -13,17 +13,17 @@ import { estadisticasApi } from '@/infrastructure/api/services';
 const { Title, Text } = Typography;
 
 const estadoConfig: Record<string, { color: string; label: string; icon: React.ReactNode }> = {
-  EN_PROCESO:  { color: '#a78bfa', label: 'En Proceso',  icon: <ClockCircleOutlined /> },
-  COMPLETADA:  { color: '#3fb950', label: 'Completada',  icon: <CheckCircleOutlined /> },
-  ARCHIVADA:   { color: '#8b949e', label: 'Archivada',   icon: <FileTextOutlined /> },
-  CANCELADA:   { color: '#f85149', label: 'Cancelada',   icon: <CloseCircleOutlined /> },
+  EN_PROCESO:  { color: '#6d28d9', label: 'En Proceso',  icon: <ClockCircleOutlined /> },
+  COMPLETADA:  { color: '#15803d', label: 'Completada',  icon: <CheckCircleOutlined /> },
+  ARCHIVADA:   { color: '#595959', label: 'Archivada',   icon: <FileTextOutlined /> },
+  CANCELADA:   { color: '#b91c1c', label: 'Cancelada',   icon: <CloseCircleOutlined /> },
 };
 
 const resultadoConfig: Record<string, { color: string; label: string }> = {
-  PENDIENTE:   { color: '#d29922', label: 'Pendiente' },
-  APROBADO:    { color: '#3fb950', label: 'Aprobado' },
-  RECHAZADO:   { color: '#f85149', label: 'Rechazado' },
-  CONDICIONAL: { color: '#58a6ff', label: 'Condicional' },
+  PENDIENTE:   { color: '#d97706', label: 'Pendiente' },
+  APROBADO:    { color: '#15803d', label: 'Aprobado' },
+  RECHAZADO:   { color: '#b91c1c', label: 'Rechazado' },
+  CONDICIONAL: { color: '#1677ff', label: 'Condicional' },
 };
 
 export default function DashboardPage() {
@@ -42,30 +42,30 @@ export default function DashboardPage() {
     {
       title: 'Total Entrevistas',
       value: data?.totales?.totalEntrevistas ?? 0,
-      icon: <FileTextOutlined style={{ fontSize: 24, color: '#58a6ff' }} />,
-      color: '#58a6ff',
-      bg: 'rgba(88,166,255,0.08)',
+      icon: <FileTextOutlined style={{ fontSize: 24, color: '#1677ff' }} />,
+      color: '#1677ff',
+      bg: 'rgba(22,119,255,0.08)',
     },
     {
       title: 'Hoy',
       value: data?.totales?.entrevistasHoy ?? 0,
-      icon: <ClockCircleOutlined style={{ fontSize: 24, color: '#3fb950' }} />,
-      color: '#3fb950',
-      bg: 'rgba(63,185,80,0.08)',
+      icon: <ClockCircleOutlined style={{ fontSize: 24, color: '#15803d' }} />,
+      color: '#15803d',
+      bg: 'rgba(82,196,26,0.08)',
     },
     {
       title: 'Este Mes',
       value: data?.totales?.entrevistasMes ?? 0,
-      icon: <RiseOutlined style={{ fontSize: 24, color: '#d29922' }} />,
-      color: '#d29922',
-      bg: 'rgba(210,153,34,0.08)',
+      icon: <RiseOutlined style={{ fontSize: 24, color: '#d97706' }} />,
+      color: '#d97706',
+      bg: 'rgba(217,119,6,0.08)',
     },
     {
       title: 'Entrevistadores',
       value: data?.totales?.entrevistadoresActivos ?? 0,
-      icon: <TeamOutlined style={{ fontSize: 24, color: '#a78bfa' }} />,
-      color: '#a78bfa',
-      bg: 'rgba(167,139,250,0.08)',
+      icon: <TeamOutlined style={{ fontSize: 24, color: '#6d28d9' }} />,
+      color: '#6d28d9',
+      bg: 'rgba(124,58,237,0.08)',
     },
   ];
 
@@ -74,11 +74,11 @@ export default function DashboardPage() {
       title: 'Candidato',
       render: (_: any, r: any) => (
         <div>
-          <Text strong style={{ color: '#e6edf3', fontSize: 13 }}>
+          <Text strong style={{ color: '#262626', fontSize: 13 }}>
             {r.datos_personales ? `${r.datos_personales.nombres} ${r.datos_personales.apellidos}` : '—'}
           </Text>
           <br />
-          <Text style={{ fontSize: 11, color: '#6e7681' }}>
+          <Text style={{ fontSize: 11, color: '#8c8c8c' }}>
             {r.datos_personales?.cargo_aplicar || 'Sin cargo'}
           </Text>
         </div>
@@ -88,11 +88,11 @@ export default function DashboardPage() {
       title: 'Estado',
       dataIndex: 'estado',
       render: (estado: string) => {
-        const cfg = estadoConfig[estado] || { color: '#8b949e', label: estado, icon: null };
+        const cfg = estadoConfig[estado] || { color: '#595959', label: estado, icon: null };
         return (
           <Tag style={{
-            background: `${cfg.color}1a`, color: cfg.color,
-            border: `1px solid ${cfg.color}4d`, borderRadius: 6,
+            background: `${cfg.color}15`, color: cfg.color,
+            border: `1px solid ${cfg.color}40`, borderRadius: 6,
             fontSize: 11, fontWeight: 500,
           }}>
             {cfg.icon} {cfg.label}
@@ -104,12 +104,12 @@ export default function DashboardPage() {
       title: 'Resultado',
       render: (_: any, r: any) => {
         const res = r.validaciones?.resultado_general;
-        if (!res) return <Text style={{ color: '#484f58', fontSize: 12 }}>—</Text>;
-        const cfg = resultadoConfig[res] || { color: '#8b949e', label: res };
+        if (!res) return <Text style={{ color: '#bfbfbf', fontSize: 12 }}>—</Text>;
+        const cfg = resultadoConfig[res] || { color: '#595959', label: res };
         return (
           <Tag style={{
-            background: `${cfg.color}1a`, color: cfg.color,
-            border: `1px solid ${cfg.color}4d`, borderRadius: 6,
+            background: `${cfg.color}15`, color: cfg.color,
+            border: `1px solid ${cfg.color}40`, borderRadius: 6,
             fontSize: 11, fontWeight: 500,
           }}>
             {cfg.label}
@@ -121,7 +121,7 @@ export default function DashboardPage() {
       title: '',
       render: (_: any, r: any) => (
         <Button size="small" type="link" onClick={() => navigate(`/entrevistas/${r.id}`)}
-          style={{ color: '#58a6ff', fontSize: 12 }}>
+          style={{ color: '#1677ff', fontSize: 12 }}>
           Ver detalle →
         </Button>
       ),
@@ -133,10 +133,10 @@ export default function DashboardPage() {
       {/* Header */}
       <div className="page-header">
         <div>
-          <Title level={3} style={{ color: '#e6edf3', margin: 0, fontWeight: 700, fontSize: 22 }}>
+          <Title level={3} style={{ color: '#262626', margin: 0, fontWeight: 700, fontSize: 22 }}>
             Dashboard
           </Title>
-          <Text style={{ color: '#6e7681', fontSize: 13 }}>
+          <Text style={{ color: '#8c8c8c', fontSize: 13 }}>
             Resumen general del sistema de entrevistas
           </Text>
         </div>
@@ -156,17 +156,17 @@ export default function DashboardPage() {
         {statsCards.map((card, i) => (
           <Col xs={24} sm={12} lg={6} key={i}>
             {loading ? (
-              <Skeleton active paragraph={{ rows: 2 }} style={{ background: '#161b22', borderRadius: 12, padding: 20 }} />
+              <Skeleton active paragraph={{ rows: 2 }} style={{ background: '#ffffff', borderRadius: 12, padding: 20 }} />
             ) : (
               <div className="stat-card" style={{ cursor: 'default' }}>
                 <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between' }}>
                   <div>
-                    <Text style={{ fontSize: 12, color: '#6e7681', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.06em' }}>
+                    <Text style={{ fontSize: 12, color: '#8c8c8c', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.06em' }}>
                       {card.title}
                     </Text>
                     <Statistic
                       value={card.value}
-                      valueStyle={{ color: '#e6edf3', fontSize: 32, fontWeight: 700, lineHeight: 1.1, marginTop: 6 }}
+                      valueStyle={{ color: '#262626', fontSize: 32, fontWeight: 700, lineHeight: 1.1, marginTop: 6 }}
                     />
                   </div>
                   <div style={{
@@ -191,9 +191,9 @@ export default function DashboardPage() {
             <Text className="section-title">Acciones Rápidas</Text>
             <Space direction="vertical" style={{ width: '100%', marginTop: 12 }} size={8}>
               {[
-                { icon: <FileAddOutlined />,        label: 'Nueva Entrevista',     path: '/entrevistas/nueva', color: '#1677ff' },
-                { icon: <UnorderedListOutlined />,  label: 'Ver Entrevistas',      path: '/entrevistas',       color: '#3fb950' },
-                { icon: <TeamOutlined />,           label: 'Entrevistadores',      path: '/entrevistadores',   color: '#a78bfa' },
+                { icon: <FileAddOutlined />,       label: 'Nueva Entrevista',     path: '/entrevistas/nueva', color: '#1677ff' },
+                { icon: <UnorderedListOutlined />, label: 'Ver Entrevistas',      path: '/entrevistas',       color: '#15803d' },
+                { icon: <TeamOutlined />,          label: 'Entrevistadores',      path: '/entrevistadores',   color: '#6d28d9' },
               ].map((action, i) => (
                 <Button
                   key={i}
@@ -201,7 +201,7 @@ export default function DashboardPage() {
                   onClick={() => navigate(action.path)}
                   icon={action.icon}
                   style={{
-                    background: '#1c2128', border: '1px solid #21262d',
+                    background: '#fafafa', border: '1px solid #f0f0f0',
                     color: action.color, textAlign: 'left', height: 42,
                     fontWeight: 500, display: 'flex', alignItems: 'center', gap: 8,
                   }}
@@ -219,7 +219,7 @@ export default function DashboardPage() {
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
               <Text className="section-title" style={{ marginBottom: 0 }}>Entrevistas Recientes</Text>
               <Button type="link" size="small" onClick={() => navigate('/entrevistas')}
-                style={{ color: '#58a6ff', fontSize: 12 }}>
+                style={{ color: '#1677ff', fontSize: 12 }}>
                 Ver todas →
               </Button>
             </div>
@@ -235,7 +235,7 @@ export default function DashboardPage() {
                 style={{ background: 'transparent' }}
               />
             ) : (
-              <Empty description={<Text style={{ color: '#484f58' }}>No hay entrevistas registradas</Text>} style={{ padding: '32px 0' }} />
+              <Empty description={<Text style={{ color: '#8c8c8c' }}>No hay entrevistas registradas</Text>} style={{ padding: '32px 0' }} />
             )}
           </div>
         </Col>

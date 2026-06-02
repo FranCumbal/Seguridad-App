@@ -27,8 +27,8 @@ export default function LoginPage() {
     <div className="login-wrapper">
       {/* Grid decorativo de fondo */}
       <div style={{
-        position: 'absolute', inset: 0, opacity: 0.03,
-        backgroundImage: 'linear-gradient(#58a6ff 1px, transparent 1px), linear-gradient(90deg, #58a6ff 1px, transparent 1px)',
+        position: 'absolute', inset: 0, opacity: 0.5,
+        backgroundImage: 'linear-gradient(#e8e8e8 1px, transparent 1px), linear-gradient(90deg, #e8e8e8 1px, transparent 1px)',
         backgroundSize: '60px 60px',
         pointerEvents: 'none',
       }} />
@@ -42,27 +42,27 @@ export default function LoginPage() {
             borderRadius: 16,
             display: 'flex', alignItems: 'center', justifyContent: 'center',
             margin: '0 auto 20px',
-            boxShadow: '0 4px 24px rgba(22,119,255,0.4)',
+            boxShadow: '0 4px 24px rgba(22,119,255,0.3)',
           }}>
             <SafetyOutlined style={{ fontSize: 28, color: 'white' }} />
           </div>
-          <Title level={2} style={{ color: '#e6edf3', margin: 0, fontWeight: 700, fontSize: 26, letterSpacing: '-0.02em' }}>
+          <Title level={2} style={{ color: '#262626', margin: 0, fontWeight: 700, fontSize: 26, letterSpacing: '-0.02em' }}>
             Seguridad App
           </Title>
-          <Paragraph style={{ color: '#6e7681', marginTop: 6, fontSize: 13, marginBottom: 0 }}>
+          <Paragraph style={{ color: '#8c8c8c', marginTop: 6, fontSize: 13, marginBottom: 0 }}>
             Sistema de Entrevistas de Seguridad Empresarial
           </Paragraph>
         </div>
 
         {/* Card de login */}
         <div style={{
-          background: '#161b22',
-          border: '1px solid #21262d',
+          background: '#ffffff',
+          border: '1px solid #f0f0f0',
           borderRadius: 16,
           padding: '32px 32px 28px',
-          boxShadow: '0 8px 32px rgba(0,0,0,0.5)',
+          boxShadow: '0 8px 32px rgba(0,0,0,0.08)',
         }}>
-          <Text style={{ fontSize: 13, color: '#8b949e', display: 'block', marginBottom: 24, fontWeight: 500 }}>
+          <Text style={{ fontSize: 13, color: '#595959', display: 'block', marginBottom: 24, fontWeight: 500 }}>
             Inicia sesión en tu cuenta
           </Text>
 
@@ -73,34 +73,32 @@ export default function LoginPage() {
               showIcon
               closable
               onClose={() => setError('')}
-              style={{ marginBottom: 20, borderRadius: 8, background: 'rgba(248,81,73,0.1)', border: '1px solid rgba(248,81,73,0.3)' }}
+              style={{ marginBottom: 20, borderRadius: 8 }}
             />
           )}
 
           <Form form={form} layout="vertical" onFinish={handleLogin} size="large">
             <Form.Item
               name="username"
-              label={<span style={{ color: '#8b949e', fontSize: 13 }}>Usuario o correo</span>}
+              label={<span style={{ color: '#595959', fontSize: 13 }}>Usuario o correo</span>}
               rules={[{ required: true, message: 'Ingresa tu usuario' }]}
             >
               <Input
-                prefix={<UserOutlined style={{ color: '#484f58' }} />}
+                prefix={<UserOutlined style={{ color: '#bfbfbf' }} />}
                 placeholder="admin"
-                style={{ background: '#1c2128', borderColor: '#30363d', color: '#e6edf3' }}
               />
             </Form.Item>
 
             <Form.Item
               name="password"
-              label={<span style={{ color: '#8b949e', fontSize: 13 }}>Contraseña</span>}
+              label={<span style={{ color: '#595959', fontSize: 13 }}>Contraseña</span>}
               rules={[{ required: true, message: 'Ingresa tu contraseña' }]}
               style={{ marginBottom: 24 }}
             >
               <Input.Password
-                prefix={<LockOutlined style={{ color: '#484f58' }} />}
+                prefix={<LockOutlined style={{ color: '#bfbfbf' }} />}
                 placeholder="••••••••"
                 iconRender={(visible) => visible ? <EyeTwoTone /> : <EyeInvisibleOutlined />}
-                style={{ background: '#1c2128', borderColor: '#30363d', color: '#e6edf3' }}
               />
             </Form.Item>
 
@@ -117,10 +115,10 @@ export default function LoginPage() {
           </Form>
         </div>
 
-        <Divider style={{ borderColor: '#21262d', margin: '28px 0 16px' }} />
+        <Divider style={{ borderColor: '#f0f0f0', margin: '28px 0 16px' }} />
 
         <div style={{ textAlign: 'center' }}>
-          <Text style={{ fontSize: 11, color: '#484f58' }}>
+          <Text style={{ fontSize: 11, color: '#bfbfbf' }}>
             Seguridad App v1.0.0 — Uso exclusivo empresarial
           </Text>
         </div>

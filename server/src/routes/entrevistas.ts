@@ -2,6 +2,51 @@ import { Router, Response } from 'express';
 import { prisma } from '../utils/prisma';
 import { authMiddleware, AuthRequest } from '../middleware/auth';
 import { v4 as uuidv4 } from 'uuid';
+import multer from 'multer';
+import path from 'path';
+import fs from 'fs';
+
+// ── Multer: fotos de candidatos ──────────────────────────────
+const storageCandidatos = multer.diskStorage({
+  destination: (_req, _file, cb) => {
+    const dir = path.join(__dirname, '../../uploads/candidatos');
+    if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
+    cb(null, dir);
+  },
+  filename: (_req, file, cb) => {
+    const ext = path.extname(file.originalname);
+    cb(null, `candidato-${Date.now()}${ext}`);
+  },
+});
+const uploadCandidato = multer({
+  storage: storageCandidatos,
+  limits: { fileSize: 5 * 1024 * 1024 },
+  fileFilter: (_req, file, cb) => {
+    if (/jpeg|jpg|png|webp/.test(path.extname(file.originalname).toLowerCase())) cb(null, true);
+    else cb(new Error('Solo imágenes JPG, PNG o WEBP'));
+  },
+});
+
+// ── Multer: fotos de tatuajes ────────────────────────────────
+const storageTatuajes = multer.diskStorage({
+  destination: (_req, _file, cb) => {
+    const dir = path.join(__dirname, '../../uploads/tatuajes');
+    if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
+    cb(null, dir);
+  },
+  filename: (_req, file, cb) => {
+    const ext = path.extname(file.originalname);
+    cb(null, `tatuaje-${Date.now()}${ext}`);
+  },
+});
+const uploadTatuaje = multer({
+  storage: storageTatuajes,
+  limits: { fileSize: 5 * 1024 * 1024 },
+  fileFilter: (_req, file, cb) => {
+    if (/jpeg|jpg|png|webp/.test(path.extname(file.originalname).toLowerCase())) cb(null, true);
+    else cb(new Error('Solo imágenes JPG, PNG o WEBP'));
+  },
+});
 
 export const entrevistasRouter = Router();
 entrevistasRouter.use(authMiddleware);
@@ -75,7 +120,9 @@ entrevistasRouter.get('/:id', async (req: AuthRequest, res: Response): Promise<v
         estudios: true,
         drogas_alcohol: true, 
         judicial: true, 
-        infiltracion: true, 
+        infiltracion: {
+          include: { tatuaje: true }
+        }, 
         validaciones: true,
         // Traemos finanzas con sus listas anidadas
         finanzas: {
@@ -136,24 +183,66 @@ entrevistasRouter.put('/:id/finanzas', async (req: AuthRequest, res: Response): 
 });
 
 // PUT /api/entrevistas/:id/datos-personales
-entrevistasRouter.put('/:id/datos-personales', async (req: AuthRequest, res: Response): Promise<void> => {
+entrevistasRouter.put('/:id/datos-personales', uploadCandidato.single('fotografia'), async (req: AuthRequest, res: Response): Promise<void> => {
   try {
     const entrevistaId = Number(req.params.id);
-    // Limpiamos id para evitar el error de IDENTITY en SQL Server
-    const { id, entrevistaId: _, ...datosLimpios } = req.body;
+    const { id, entrevistaId: _, ...rawBody } = req.body;
+
+    const data: any = {};
+    for (const [key, val] of Object.entries(rawBody)) {
+      data[key] = (val === '' || val === 'null' || val === 'undefined') ? null : val;
+    }
+
+    if (data.fecha_nacimiento) data.fecha_nacimiento = new Date(data.fecha_nacimiento as string);
+    if (data.edad) data.edad = parseInt(data.edad as string, 10);
+    if (req.file) data.fotografia = `/uploads/candidatos/${req.file.filename}`;
 
     const resultado = await prisma.datosPersonales.upsert({
       where: { entrevistaId },
-      update: datosLimpios,
-      create: { 
-        ...datosLimpios, 
-        entrevistaId 
-      },
+      update: data,
+      create: { ...data, entrevistaId },
     });
     res.json({ success: true, data: resultado });
   } catch (error) {
     console.error(error);
     res.status(500).json({ success: false, message: 'Error al guardar datos personales' });
+  }
+});
+
+// POST /api/entrevistas/:id/tatuajes
+entrevistasRouter.post('/:id/tatuajes', uploadTatuaje.single('fotografia'), async (req: AuthRequest, res: Response): Promise<void> => {
+  try {
+    const entrevistaId = Number(req.params.id);
+
+    let infiltracion = await prisma.infiltracion.findUnique({ where: { entrevistaId } });
+    if (!infiltracion) {
+      infiltracion = await prisma.infiltracion.create({ data: { entrevistaId } });
+    }
+
+    const { descripcion } = req.body;
+    const fotografia = req.file ? `/uploads/tatuajes/${req.file.filename}` : null;
+
+    const tatuaje = await prisma.tatuaje.create({
+      data: {
+        infiltracionId: infiltracion.id,
+        descripcion: descripcion || null,
+        fotografia,
+      },
+    });
+    res.status(201).json({ success: true, data: tatuaje });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ success: false, message: 'Error al agregar tatuaje' });
+  }
+});
+
+// DELETE /api/entrevistas/:id/tatuajes/:tatuajeId
+entrevistasRouter.delete('/:id/tatuajes/:tatuajeId', async (req: AuthRequest, res: Response): Promise<void> => {
+  try {
+    await prisma.tatuaje.delete({ where: { id: Number(req.params.tatuajeId) } });
+    res.json({ success: true, message: 'Tatuaje eliminado' });
+  } catch (error) {
+    res.status(500).json({ success: false, message: 'Error al eliminar tatuaje' });
   }
 });
 

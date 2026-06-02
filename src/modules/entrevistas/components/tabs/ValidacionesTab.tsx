@@ -63,7 +63,7 @@ export default function ValidacionesTab({ entrevistaId, data, onSaved }: Props) 
   const calificacion = watch('calificacion');
   const resultadoCfg = resultadoOpts.find((r) => r.value === resultado) || resultadoOpts[0];
 
-  const getCalColor = (val: number) => val >= 80 ? '#3fb950' : val >= 60 ? '#d29922' : '#f85149';
+  const getCalColor = (val: number) => val >= 80 ? '#15803d' : val >= 60 ? '#d97706' : '#cf1322';
 
   const onSubmit = async (values: ValidacionesFormValues) => {
     try {
@@ -80,33 +80,46 @@ export default function ValidacionesTab({ entrevistaId, data, onSaved }: Props) 
 
   return (
     <form onSubmit={handleSubmit(onSubmit)}>
-      <div style={{ background: 'rgba(63,185,80,0.06)', border: '1px solid rgba(63,185,80,0.15)', borderRadius: 8, padding: '10px 14px', marginBottom: 20, display: 'flex', gap: 10, alignItems: 'center' }}>
+      <div style={{ background: 'rgba(82,196,26,0.06)', border: '1px solid rgba(82,196,26,0.15)', borderRadius: 8, padding: '10px 14px', marginBottom: 20, display: 'flex', gap: 10, alignItems: 'center' }}>
         <CheckCircleOutlined style={{ color: '#3fb950' }} />
         <Text style={{ color: '#8b949e', fontSize: 12 }}>Sección final de la entrevista. El resultado determinará el estado del proceso de contratación.</Text>
       </div>
 
       <p style={{ fontSize: 11, fontWeight: 600, color: '#6e7681', textTransform: 'uppercase', letterSpacing: '0.07em', marginBottom: 14 }}>Verificaciones</p>
       <Row gutter={[24, 0]} style={{ marginBottom: 20 }}>
-        <Col xs={12} md={6}>
-          <div style={{ background: '#1c2128', border: '1px solid #30363d', borderRadius: 10, padding: '16px', textAlign: 'center' }}>
-            <Controller name="documentos_verificados" control={control} render={({ field }) => <Switch {...field} checked={field.value} checkedChildren="✓" unCheckedChildren="✗" style={{ marginBottom: 8 }} />} />
-            <Text style={{ display: 'block', color: '#8b949e', fontSize: 12 }}>Documentos Verificados</Text>
-          </div>
-        </Col>
-        <Col xs={12} md={6}>
-          <div style={{ background: '#1c2128', border: '1px solid #30363d', borderRadius: 10, padding: '16px', textAlign: 'center' }}>
-            <Controller name="referencias_verificadas" control={control} render={({ field }) => <Switch {...field} checked={field.value} checkedChildren="✓" unCheckedChildren="✗" style={{ marginBottom: 8 }} />} />
-            <Text style={{ display: 'block', color: '#8b949e', fontSize: 12 }}>Referencias Verificadas</Text>
-          </div>
-        </Col>
-        <Col xs={24} md={12}>
-          <div style={{ background: '#1c2128', border: '1px solid #30363d', borderRadius: 10, padding: '16px' }}>
-            <Form.Item label={lbl('Aprobado por')} style={{ marginBottom: 0 }}>
-              <Controller name="aprobado_por" control={control} render={({ field }) => <Input {...field} placeholder="Nombre del supervisor que aprueba" />} />
-            </Form.Item>
-          </div>
-        </Col>
-      </Row>
+  <Col xs={12} md={6}>
+    <div style={{ background: '#f6f8fa', border: '1px solid #d0d7de', borderRadius: 10, padding: '16px', textAlign: 'center' }}>
+      <Controller name="documentos_verificados" control={control} render={({ field }) => <Switch {...field} checked={field.value} checkedChildren="✓" unCheckedChildren="✗" style={{ marginBottom: 8 }} />} />
+      <Text style={{ display: 'block', color: '#24292f', fontSize: 12, fontWeight: 500 }}>Documentos Verificados</Text>
+    </div>
+  </Col>
+  <Col xs={12} md={6}>
+    <div style={{ background: '#f6f8fa', border: '1px solid #d0d7de', borderRadius: 10, padding: '16px', textAlign: 'center' }}>
+      <Controller name="referencias_verificadas" control={control} render={({ field }) => <Switch {...field} checked={field.value} checkedChildren="✓" unCheckedChildren="✗" style={{ marginBottom: 8 }} />} />
+      <Text style={{ display: 'block', color: '#24292f', fontSize: 12, fontWeight: 500 }}>Referencias Verificadas</Text>
+    </div>
+  </Col>
+  <Col xs={24} md={12}>
+    <div style={{ background: '#f6f8fa', border: '1px solid #d0d7de', borderRadius: 10, padding: '16px' }}>
+      <Form.Item
+        label={<span style={{ color: '#24292f', fontSize: 12, fontWeight: 500 }}>Aprobado por</span>}
+        style={{ marginBottom: 0 }}
+      >
+        <Controller
+          name="aprobado_por"
+          control={control}
+          render={({ field }) => (
+            <Input
+              {...field}
+              placeholder="Nombre del supervisor que aprueba"
+              style={{ background: '#ffffff', borderColor: '#d0d7de', color: '#24292f' }}
+            />
+          )}
+        />
+      </Form.Item>
+    </div>
+  </Col>
+</Row>
 
       <Divider style={{ borderColor: '#21262d', margin: '8px 0 20px' }} />
       <p style={{ fontSize: 11, fontWeight: 600, color: '#6e7681', textTransform: 'uppercase', letterSpacing: '0.07em', marginBottom: 14 }}>Evaluación Final</p>

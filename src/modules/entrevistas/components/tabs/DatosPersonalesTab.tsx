@@ -1,6 +1,6 @@
-import { useEffect } from 'react';
-import { Form, Input, Select, DatePicker, Button, Row, Col, App, Divider, InputNumber } from 'antd';
-import { SaveOutlined } from '@ant-design/icons';
+import { useEffect, useState } from 'react';
+import { Form, Input, Select, DatePicker, Button, Row, Col, App, Divider, InputNumber, Upload, Avatar } from 'antd';
+import { SaveOutlined, UserOutlined, UploadOutlined } from '@ant-design/icons';
 import { useForm, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
@@ -8,54 +8,39 @@ import dayjs from 'dayjs';
 import { entrevistasApi } from '@/infrastructure/api/services';
 import { CARGOS_MINERIA, ESTADOS_CIVILES, ESTADOS_SALUD, GENEROS, PROVINCIAS_ECUADOR } from '@/shared/utils/catalogos';
 
+const API_URL = import.meta.env.VITE_API_URL?.replace('/api', '') || 'http://localhost:3001';
+
 const AREAS_TRABAJO = [
-  "ADMINISTRACION",
-  "ALL",
-  "AMBIENTE",
-  "BODEGA",
-  "DEPARTAMENTO",
-  "ELECTRICOS",
-  "FINANCIERO",
-  "GEOLOGIA",
-  "INTEGRAL DE SALUD EN EL TRABAJO",
-  "JURIDICO",
-  "LABORATORIO",
-  "MECANICA",
-  "MINA",
-  "MOLINO",
-  "OPERACIONES",
-  "PLANTA DE BENEFICIO",
-  "SEGURIDAD FISICA",
-  "SISTEMAS",
-  "TALENTO HUMANO",
-  "TECNICO DE SEGURIDAD E HIGIENE",
-  "TELECOMUNICACIONES",
-  "TRANSPORTE"
+  "ADMINISTRACION", "ALL", "AMBIENTE", "BODEGA", "DEPARTAMENTO", "ELECTRICOS",
+  "FINANCIERO", "GEOLOGIA", "INTEGRAL DE SALUD EN EL TRABAJO", "JURIDICO",
+  "LABORATORIO", "MECANICA", "MINA", "MOLINO", "OPERACIONES", "PLANTA DE BENEFICIO",
+  "SEGURIDAD FISICA", "SISTEMAS", "TALENTO HUMANO", "TECNICO DE SEGURIDAD E HIGIENE",
+  "TELECOMUNICACIONES", "TRANSPORTE",
 ];
 
 const schema = z.object({
-  cedula:               z.string().min(10, 'Cédula debe tener 10 dígitos'),
-  libreta_militar:      z.string().optional(),
-  nombres:              z.string().min(2, 'Nombres requeridos'),
-  apellidos:            z.string().min(2, 'Apellidos requeridos'),
-  fecha_nacimiento:     z.any(), 
-  edad:                 z.number().optional().nullable(),
-  estado_civil:         z.string().min(1, 'Estado civil requerido'),
-  genero:               z.string().min(1, 'Género requerido'),
-  lugar_nacimiento:     z.string().optional(),
-  provincia:            z.string().optional(),
-  ciudad:               z.string().optional(),
-  barrio_parroquia:     z.string().optional(),
-  direccion:            z.string().min(10, 'Ingrese una dirección detallada').optional().or(z.literal('')),
-  estado_salud:         z.string().optional(),
-  telefono_fijo:        z.string().optional(),
-  celular:              z.string().min(9, 'Celular requerido'),
-  correo:               z.string().email('Ingrese un correo electrónico válido').optional().or(z.literal('')),
-  area_trabajo:         z.string().optional(),
-  cargo_postula:        z.string().optional(),
+  cedula:           z.string().min(10, 'Cédula debe tener 10 dígitos'),
+  libreta_militar:  z.string().optional(),
+  nombres:          z.string().min(2, 'Nombres requeridos'),
+  apellidos:        z.string().min(2, 'Apellidos requeridos'),
+  fecha_nacimiento: z.any(),
+  edad:             z.number().optional().nullable(),
+  estado_civil:     z.string().min(1, 'Estado civil requerido'),
+  genero:           z.string().min(1, 'Género requerido'),
+  lugar_nacimiento: z.string().optional(),
+  provincia:        z.string().optional(),
+  ciudad:           z.string().optional(),
+  barrio_parroquia: z.string().optional(),
+  direccion:        z.string().min(10, 'Ingrese una dirección detallada').optional().or(z.literal('')),
+  estado_salud:     z.string().optional(),
+  telefono_fijo:    z.string().optional(),
+  celular:          z.string().min(9, 'Celular requerido'),
+  correo:           z.string().email('Ingrese un correo electrónico válido').optional().or(z.literal('')),
+  area_trabajo:     z.string().optional(),
+  cargo_postula:    z.string().optional(),
 });
 
-type FormData = z.infer<typeof schema>;
+type PersonalDataForm = z.infer<typeof schema>;
 
 interface Props { entrevistaId: number; data: any; onSaved: () => void; }
 
@@ -63,11 +48,12 @@ const label = (text: string) => <span style={{ color: '#8b949e', fontSize: 12 }}
 
 export default function DatosPersonalesTab({ entrevistaId, data, onSaved }: Props) {
   const { message } = App.useApp();
-  const { control, handleSubmit, reset, watch, setValue, formState: { errors, isSubmitting } } = useForm<FormData>({
+  const [fileList, setFileList] = useState<any[]>([]);
+
+  const { control, handleSubmit, reset, watch, setValue, formState: { errors, isSubmitting } } = useForm<PersonalDataForm>({
     resolver: zodResolver(schema),
   });
 
-  // Observamos la provincia seleccionada para filtrar las ciudades
   const provinciaSeleccionada = watch('provincia');
 
   useEffect(() => {
@@ -81,24 +67,87 @@ export default function DatosPersonalesTab({ entrevistaId, data, onSaved }: Prop
     }
   }, [data, reset]);
 
-  const onSubmit = async (values: FormData) => {
+  const onSubmit = async (values: PersonalDataForm) => {
     try {
-      const payload = {
-        ...values,
-        fecha_nacimiento: values.fecha_nacimiento ? dayjs(values.fecha_nacimiento).toISOString() : null,
-      };
-      await entrevistasApi.saveDatosPersonales(entrevistaId, payload);
+      const fd = new window.FormData();
+
+      for (const [key, val] of Object.entries(values)) {
+        if (val === null || val === undefined) continue;
+        if (key === 'fecha_nacimiento') {
+          fd.append(key, dayjs(val).toISOString());
+        } else {
+          fd.append(key, String(val));
+        }
+      }
+
+      if (fileList[0]?.originFileObj) {
+        fd.append('fotografia', fileList[0].originFileObj);
+      }
+
+      await entrevistasApi.saveDatosPersonales(entrevistaId, fd as any);
       message.success('Datos personales guardados correctamente');
       onSaved();
-    } catch { message.error('Error al guardar datos personales'); }
+    } catch {
+      message.error('Error al guardar datos personales');
+    }
   };
 
-  const errMsg = (field: keyof FormData) =>
+  const errMsg = (field: keyof PersonalDataForm) =>
     errors[field] ? <span style={{ color: '#f85149', fontSize: 11 }}>{errors[field]?.message as string}</span> : null;
+
+  const currentPhotoUrl = data?.fotografia ? `${API_URL}${data.fotografia}` : null;
+  const previewUrl = fileList[0]?.originFileObj
+    ? URL.createObjectURL(fileList[0].originFileObj)
+    : null;
 
   return (
     <form onSubmit={handleSubmit(onSubmit)}>
-      
+
+      {/* FOTO DEL CANDIDATO */}
+      <div style={{
+        display: 'flex', flexDirection: 'column', alignItems: 'center',
+        gap: 10, marginBottom: 28, paddingBottom: 24,
+        borderBottom: '1px solid #21262d',
+      }}>
+        {previewUrl || currentPhotoUrl ? (
+          <img
+            src={previewUrl || currentPhotoUrl!}
+            alt="Foto del candidato"
+            style={{
+              width: 110, height: 110, objectFit: 'cover',
+              borderRadius: 12, border: '3px solid #21262d',
+            }}
+          />
+        ) : (
+          <Avatar
+            size={110}
+            icon={<UserOutlined />}
+            style={{ background: 'linear-gradient(135deg, #1677ff, #0d3380)', border: '3px solid #21262d' }}
+          />
+        )}
+        <Upload
+          maxCount={1}
+          beforeUpload={() => false}
+          fileList={fileList}
+          onChange={({ fileList: fl }) => setFileList(fl)}
+          accept="image/jpeg,image/png,image/webp"
+          showUploadList={false}
+        >
+          <Button
+            size="small"
+            icon={<UploadOutlined />}
+            style={{ background: '#21262d', border: '1px solid #30363d', color: '#8b949e' }}
+          >
+            {currentPhotoUrl ? 'Cambiar foto' : 'Subir foto del candidato'}
+          </Button>
+        </Upload>
+        {fileList[0] && (
+          <span style={{ fontSize: 11, color: '#3fb950' }}>
+            ✓ {fileList[0].name} — se guardará al presionar "Guardar"
+          </span>
+        )}
+      </div>
+
       {/* SECCIÓN 1: IDENTIFICACIÓN */}
       <p style={{ fontSize: 11, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.07em', color: '#6e7681', marginBottom: 14 }}>
         Información Personal
@@ -147,19 +196,15 @@ export default function DatosPersonalesTab({ entrevistaId, data, onSaved }: Prop
           <Form.Item label={label('Fecha de Nacimiento *')} validateStatus={errors.fecha_nacimiento ? 'error' : ''}>
             <Controller name="fecha_nacimiento" control={control}
               render={({ field }) => (
-                <DatePicker 
-                  {...field} 
-                  style={{ width: '100%' }} 
-                  format="DD/MM/YYYY" 
-                  placeholder="dd/mm/aaaa" 
+                <DatePicker
+                  {...field}
+                  style={{ width: '100%' }}
+                  format="DD/MM/YYYY"
+                  placeholder="dd/mm/aaaa"
                   onChange={(date) => {
                     field.onChange(date);
-                    if (date) {
-                      const edadCalculada = dayjs().diff(date, 'year');
-                      setValue('edad', edadCalculada);
-                    } else {
-                      setValue('edad', null);
-                    }
+                    if (date) setValue('edad', dayjs().diff(date, 'year'));
+                    else setValue('edad', null);
                   }}
                 />
               )} />
@@ -178,7 +223,7 @@ export default function DatosPersonalesTab({ entrevistaId, data, onSaved }: Prop
       </Row>
 
       <Divider style={{ borderColor: '#21262d', margin: '8px 0 16px' }} />
-      
+
       {/* SECCIÓN 2: CONTACTO Y RESIDENCIA */}
       <p style={{ fontSize: 11, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.07em', color: '#6e7681', marginBottom: 14 }}>
         Contacto y Residencia
@@ -188,14 +233,11 @@ export default function DatosPersonalesTab({ entrevistaId, data, onSaved }: Prop
           <Form.Item label={label('Provincia')}>
             <Controller name="provincia" control={control}
               render={({ field }) => (
-                <Select {...field} 
+                <Select {...field}
                   showSearch
-                  placeholder="Seleccione Provincia" 
+                  placeholder="Seleccione Provincia"
                   options={Object.keys(PROVINCIAS_ECUADOR).map(p => ({ value: p, label: p }))}
-                  onChange={(val) => {
-                    field.onChange(val);
-                    setValue('ciudad', undefined);
-                  }}
+                  onChange={(val) => { field.onChange(val); setValue('ciudad', undefined); }}
                 />
               )} />
           </Form.Item>
@@ -204,9 +246,9 @@ export default function DatosPersonalesTab({ entrevistaId, data, onSaved }: Prop
           <Form.Item label={label('Ciudad')}>
             <Controller name="ciudad" control={control}
               render={({ field }) => (
-                <Select {...field} 
+                <Select {...field}
                   showSearch
-                  placeholder={provinciaSeleccionada ? "Seleccione Ciudad" : "Elija primero una provincia"} 
+                  placeholder={provinciaSeleccionada ? 'Seleccione Ciudad' : 'Elija primero una provincia'}
                   disabled={!provinciaSeleccionada}
                   options={provinciaSeleccionada ? PROVINCIAS_ECUADOR[provinciaSeleccionada].map(c => ({ value: c, label: c })) : []}
                 />
@@ -218,13 +260,11 @@ export default function DatosPersonalesTab({ entrevistaId, data, onSaved }: Prop
             <Controller name="barrio_parroquia" control={control} render={({ field }) => <Input {...field} placeholder="Ej. La Aurora" />} />
           </Form.Item>
         </Col>
-        
         <Col xs={24}>
           <Form.Item label={label('Dirección Detallada *')} validateStatus={errors.direccion ? 'error' : ''} help={errMsg('direccion')}>
             <Controller name="direccion" control={control} render={({ field }) => <Input.TextArea {...field} rows={2} placeholder="Calle principal, número, intersección y referencia..." />} />
           </Form.Item>
         </Col>
-
         <Col xs={24} md={8}>
           <Form.Item label={label('Teléfono Fijo')}>
             <Controller name="telefono_fijo" control={control} render={({ field }) => <Input {...field} placeholder="04 200 0000" />} />
@@ -250,13 +290,12 @@ export default function DatosPersonalesTab({ entrevistaId, data, onSaved }: Prop
       </p>
       <Row gutter={[16, 0]}>
         <Col xs={24} md={8}>
-          <Form.Item label={label('Área de Trabajo')} validateStatus={errors.area_trabajo ? 'error' : ''} help={errMsg('area_trabajo')}>
-            <Controller name="area_trabajo" control={control} 
+          <Form.Item label={label('Área de Trabajo')}>
+            <Controller name="area_trabajo" control={control}
               render={({ field }) => (
                 <Select {...field}
                   showSearch
                   placeholder="Seleccione Área"
-                  optionFilterProp="children"
                   filterOption={(input, option) => (option?.label ?? '').toLowerCase().includes(input.toLowerCase())}
                   options={AREAS_TRABAJO.map(area => ({ value: area, label: area }))}
                 />
@@ -267,10 +306,9 @@ export default function DatosPersonalesTab({ entrevistaId, data, onSaved }: Prop
           <Form.Item label={label('Cargo / Puesto Postula')}>
             <Controller name="cargo_postula" control={control}
               render={({ field }) => (
-                <Select {...field} 
-                  showSearch 
-                  placeholder="Escriba o seleccione el cargo" 
-                  optionFilterProp="children"
+                <Select {...field}
+                  showSearch
+                  placeholder="Escriba o seleccione el cargo"
                   filterOption={(input, option) => (option?.label ?? '').toLowerCase().includes(input.toLowerCase())}
                   options={CARGOS_MINERIA.map(cargo => ({ value: cargo, label: cargo }))}
                 />

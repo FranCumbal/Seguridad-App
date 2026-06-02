@@ -14,11 +14,11 @@ const { Sider, Header, Content } = Layout;
 const { Text } = Typography;
 
 const menuItems = [
-  { key: '/dashboard',         icon: <DashboardOutlined />,     label: 'Dashboard' },
-  { key: '/entrevistas',       icon: <UnorderedListOutlined />,  label: 'Entrevistas' },
-  { key: '/entrevistas/nueva', icon: <FileAddOutlined />,        label: 'Nueva Entrevista' },
-  { key: '/entrevistadores',   icon: <TeamOutlined />,           label: 'Entrevistadores' },
-  { key: '/configuracion',     icon: <SettingOutlined />,        label: 'Configuración' },
+  { key: '/dashboard',         icon: <DashboardOutlined />,    label: 'Dashboard' },
+  { key: '/entrevistas',       icon: <UnorderedListOutlined />, label: 'Entrevistas' },
+  { key: '/entrevistas/nueva', icon: <FileAddOutlined />,       label: 'Nueva Entrevista' },
+  { key: '/entrevistadores',   icon: <TeamOutlined />,          label: 'Entrevistadores' },
+  { key: '/configuracion',     icon: <SettingOutlined />,       label: 'Configuración' },
 ];
 
 export default function MainLayout() {
@@ -48,7 +48,6 @@ export default function MainLayout() {
     onClick: ({ key }: { key: string }) => { if (key === 'logout') handleLogout(); },
   };
 
-  // Determinar la ruta activa
   const selectedKey = menuItems.find(
     (item) => location.pathname.startsWith(item.key) && item.key !== '/dashboard'
       ? true
@@ -56,7 +55,7 @@ export default function MainLayout() {
   )?.key || '/dashboard';
 
   return (
-    <Layout style={{ minHeight: '100vh', background: '#0d1117' }}>
+    <Layout style={{ minHeight: '100vh', background: '#f5f5f5' }}>
       {/* ── SIDEBAR ──────────────────────────────────────── */}
       <Sider
         collapsible
@@ -65,8 +64,9 @@ export default function MainLayout() {
         trigger={null}
         width={240}
         style={{
-          background: '#0d1117',
-          borderRight: '1px solid #21262d',
+          background: '#ffffff',
+          borderRight: '1px solid #f0f0f0',
+          boxShadow: '2px 0 8px rgba(0,0,0,0.04)',
           position: 'fixed',
           height: '100vh',
           left: 0, top: 0, bottom: 0,
@@ -88,7 +88,7 @@ export default function MainLayout() {
 
         {/* Navigation */}
         <Menu
-          theme="dark"
+          theme="light"
           mode="inline"
           selectedKeys={[selectedKey]}
           items={menuItems.map((item) => ({
@@ -102,8 +102,8 @@ export default function MainLayout() {
         {!collapsed && (
           <div style={{
             position: 'absolute', bottom: 0, left: 0, right: 0,
-            padding: '12px 16px', borderTop: '1px solid #21262d',
-            background: '#0d1117',
+            padding: '12px 16px', borderTop: '1px solid #f0f0f0',
+            background: '#ffffff',
           }}>
             <Space size={8} align="center" style={{ width: '100%', justifyContent: 'space-between' }}>
               <Space size={8}>
@@ -111,16 +111,16 @@ export default function MainLayout() {
                   {usuario?.nombre?.[0]}{usuario?.apellido?.[0]}
                 </Avatar>
                 <div style={{ lineHeight: 1.3 }}>
-                  <Text style={{ fontSize: 12, color: '#e6edf3', display: 'block', fontWeight: 500 }}>
+                  <Text style={{ fontSize: 12, color: '#262626', display: 'block', fontWeight: 500 }}>
                     {usuario?.nombre} {usuario?.apellido}
                   </Text>
-                  <Text style={{ fontSize: 10, color: '#6e7681' }}>{usuario?.rol}</Text>
+                  <Text style={{ fontSize: 10, color: '#8c8c8c' }}>{usuario?.rol}</Text>
                 </div>
               </Space>
               <Tooltip title="Cerrar sesión">
                 <LogoutOutlined
                   onClick={handleLogout}
-                  style={{ color: '#6e7681', cursor: 'pointer', fontSize: 14 }}
+                  style={{ color: '#8c8c8c', cursor: 'pointer', fontSize: 14 }}
                 />
               </Tooltip>
             </Space>
@@ -129,40 +129,41 @@ export default function MainLayout() {
       </Sider>
 
       {/* ── MAIN ─────────────────────────────────────────── */}
-      <Layout style={{ marginLeft: collapsed ? 80 : 240, transition: 'margin-left 0.2s', background: '#0d1117' }}>
+      <Layout style={{ marginLeft: collapsed ? 80 : 240, transition: 'margin-left 0.2s', background: '#f5f5f5' }}>
         {/* Header */}
         <Header style={{
-          background: '#0d1117',
-          borderBottom: '1px solid #21262d',
+          background: '#ffffff',
+          borderBottom: '1px solid #f0f0f0',
           padding: '0 24px',
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'space-between',
           position: 'sticky', top: 0, zIndex: 99,
           height: 56,
+          boxShadow: '0 1px 4px rgba(0,0,0,0.04)',
         }}>
           <Space size={16} align="center">
             <div
               onClick={() => setCollapsed(!collapsed)}
-              style={{ color: '#8b949e', cursor: 'pointer', fontSize: 16, display: 'flex', alignItems: 'center' }}
+              style={{ color: '#595959', cursor: 'pointer', fontSize: 16, display: 'flex', alignItems: 'center' }}
             >
               {collapsed ? <MenuUnfoldOutlined /> : <MenuFoldOutlined />}
             </div>
-            <Text style={{ color: '#6e7681', fontSize: 12 }}>
+            <Text style={{ color: '#8c8c8c', fontSize: 12 }}>
               {new Date().toLocaleDateString('es-ES', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}
             </Text>
           </Space>
 
           <Space size={16} align="center">
             <Badge count={0} size="small">
-              <BellOutlined style={{ fontSize: 16, color: '#8b949e', cursor: 'pointer' }} />
+              <BellOutlined style={{ fontSize: 16, color: '#595959', cursor: 'pointer' }} />
             </Badge>
             <Dropdown menu={userMenu} placement="bottomRight" arrow>
               <Space size={8} style={{ cursor: 'pointer' }}>
                 <Avatar size={30} style={{ background: '#1677ff', fontSize: 12 }}>
                   {usuario?.nombre?.[0]}{usuario?.apellido?.[0]}
                 </Avatar>
-                <Text style={{ fontSize: 13, color: '#c9d1d9', fontWeight: 500 }}>
+                <Text style={{ fontSize: 13, color: '#262626', fontWeight: 500 }}>
                   {usuario?.nombre}
                 </Text>
               </Space>

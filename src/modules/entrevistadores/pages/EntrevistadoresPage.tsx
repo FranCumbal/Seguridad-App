@@ -93,10 +93,10 @@ export default function EntrevistadoresPage() {
     <div className="page-container fade-in-up">
       <div className="page-header">
         <div>
-          <Title level={3} style={{ color: '#e6edf3', margin: 0, fontWeight: 700, fontSize: 22 }}>
+          <Title level={3} style={{ color: '#262626', margin: 0, fontWeight: 700, fontSize: 22 }}>
             Entrevistadores
           </Title>
-          <Text style={{ color: '#6e7681', fontSize: 13 }}>
+          <Text style={{ color: '#8c8c8c', fontSize: 13 }}>
             Gestión del equipo de entrevistadores de seguridad
           </Text>
         </div>
@@ -118,8 +118,8 @@ export default function EntrevistadoresPage() {
       ) : entrevistadores.length === 0 ? (
         <div style={{ textAlign: 'center', padding: '80px 0' }}>
           <Empty
-            image={<TeamOutlined style={{ fontSize: 56, color: '#484f58' }} />}
-            description={<Text style={{ color: '#484f58' }}>No hay entrevistadores registrados</Text>}
+            image={<TeamOutlined style={{ fontSize: 56, color: '#d9d9d9' }} />}
+            description={<Text style={{ color: '#8c8c8c' }}>No hay entrevistadores registrados</Text>}
           />
         </div>
       ) : (
@@ -136,9 +136,9 @@ export default function EntrevistadoresPage() {
                   <Tag
                     icon={e.activo ? <CheckCircleOutlined /> : <StopOutlined />}
                     style={{
-                      background: e.activo ? 'rgba(63,185,80,0.12)' : 'rgba(139,148,158,0.12)',
-                      color: e.activo ? '#3fb950' : '#8b949e',
-                      border: e.activo ? '1px solid rgba(63,185,80,0.3)' : '1px solid rgba(139,148,158,0.3)',
+                      background: e.activo ? 'rgba(82,196,26,0.08)' : 'rgba(0,0,0,0.04)',
+                      color: e.activo ? '#15803d' : '#8c8c8c',
+                      border: e.activo ? '1px solid rgba(82,196,26,0.3)' : '1px solid rgba(0,0,0,0.12)',
                       fontSize: 10, borderRadius: 6, padding: '1px 6px',
                     }}
                   >
@@ -151,20 +151,20 @@ export default function EntrevistadoresPage() {
                   <Avatar
                     size={72}
                     src={`${API_URL}${e.fotografia}`}
-                    style={{ border: '3px solid #21262d', marginBottom: 12 }}
+                    style={{ border: '3px solid #f0f0f0', marginBottom: 12 }}
                   />
                 ) : (
                   <Avatar
                     size={72}
                     icon={<UserOutlined />}
-                    style={{ background: 'linear-gradient(135deg, #1677ff, #0d3380)', marginBottom: 12, border: '3px solid #21262d' }}
+                    style={{ background: 'linear-gradient(135deg, #1677ff, #0d3380)', marginBottom: 12, border: '3px solid #f0f0f0' }}
                   />
                 )}
 
-                <Title level={5} style={{ color: '#e6edf3', margin: '0 0 4px', fontSize: 15, fontWeight: 600 }}>
+                <Title level={5} style={{ color: '#262626', margin: '0 0 4px', fontSize: 15, fontWeight: 600 }}>
                   {e.nombre_completo}
                 </Title>
-                <Text style={{ fontSize: 12, color: '#8b949e', display: 'block', marginBottom: 16 }}>
+                <Text style={{ fontSize: 12, color: '#8c8c8c', display: 'block', marginBottom: 16 }}>
                   {e.cargo}
                 </Text>
 
@@ -175,7 +175,7 @@ export default function EntrevistadoresPage() {
                       size="small"
                       icon={<EditOutlined />}
                       onClick={() => handleOpenModal(e)}
-                      style={{ background: '#21262d', border: '1px solid #30363d', color: '#8b949e' }}
+                      style={{ background: '#fafafa', border: '1px solid #d9d9d9', color: '#595959' }}
                     />
                   </Tooltip>
                   <Tooltip title="Eliminar">
@@ -184,7 +184,6 @@ export default function EntrevistadoresPage() {
                       danger
                       icon={<DeleteOutlined />}
                       onClick={() => handleDelete(e)}
-                      style={{ background: 'rgba(248,81,73,0.1)', border: '1px solid rgba(248,81,73,0.3)' }}
                     />
                   </Tooltip>
                 </Space>
@@ -197,7 +196,7 @@ export default function EntrevistadoresPage() {
       {/* Modal Crear/Editar */}
       <Modal
         title={
-          <Text style={{ color: '#e6edf3', fontWeight: 700, fontSize: 16 }}>
+          <Text style={{ color: '#262626', fontWeight: 700, fontSize: 16 }}>
             {editTarget ? 'Editar Entrevistador' : 'Nuevo Entrevistador'}
           </Text>
         }

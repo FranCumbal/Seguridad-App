@@ -55,8 +55,18 @@ export const entrevistasApi = {
     apiClient.delete(`/entrevistas/${id}`),
 
   // Secciones
-  saveDatosPersonales: (id: number, data: any) =>
-    apiClient.put(`/entrevistas/${id}/datos-personales`, data),
+  saveDatosPersonales: (id: number, data: FormData) =>
+    apiClient.put(`/entrevistas/${id}/datos-personales`, data, {
+      headers: { 'Content-Type': 'multipart/form-data' },
+    }),
+
+  addTatuaje: (entrevistaId: number, data: FormData) =>
+    apiClient.post(`/entrevistas/${entrevistaId}/tatuajes`, data, {
+      headers: { 'Content-Type': 'multipart/form-data' },
+    }),
+
+  deleteTatuaje: (entrevistaId: number, tatuajeId: number) =>
+    apiClient.delete(`/entrevistas/${entrevistaId}/tatuajes/${tatuajeId}`),
 
   // Dentro de const entrevistasApi = { ...
   

@@ -4,7 +4,7 @@ import {
   Typography, Button, Tabs, Space, Tag, Avatar, Spin, App,
 } from 'antd';
 import {
-  ArrowLeftOutlined, UserOutlined, FilePdfOutlined, SaveOutlined,
+  ArrowLeftOutlined, UserOutlined, FilePdfOutlined,
 } from '@ant-design/icons';
 import { entrevistasApi } from '@/infrastructure/api/services';
 import DatosPersonalesTab from '../components/tabs/DatosPersonalesTab';
@@ -22,10 +22,10 @@ const { Title, Text } = Typography;
 const API_URL = import.meta.env.VITE_API_URL?.replace('/api', '') || 'http://localhost:3001';
 
 const estadoMap: Record<string, { color: string; label: string }> = {
-  EN_PROCESO:  { color: '#a78bfa', label: 'En Proceso' },
-  COMPLETADA:  { color: '#3fb950', label: 'Completada' },
-  ARCHIVADA:   { color: '#8b949e', label: 'Archivada'  },
-  CANCELADA:   { color: '#f85149', label: 'Cancelada'  },
+  EN_PROCESO:  { color: '#6d28d9', label: 'En Proceso' },
+  COMPLETADA:  { color: '#15803d', label: 'Completada' },
+  ARCHIVADA:   { color: '#595959', label: 'Archivada'  },
+  CANCELADA:   { color: '#b91c1c', label: 'Cancelada'  },
 };
 
 export default function DetalleEntrevistaPage() {
@@ -54,7 +54,7 @@ export default function DetalleEntrevistaPage() {
 
   if (!entrevista) return null;
 
-  const estadoCfg = estadoMap[entrevista.estado] || { color: '#8b949e', label: entrevista.estado };
+  const estadoCfg = estadoMap[entrevista.estado] || { color: '#595959', label: entrevista.estado };
   const candidato = entrevista.datos_personales;
 
   const tabItems = [
@@ -77,22 +77,21 @@ export default function DetalleEntrevistaPage() {
           <Button
             icon={<ArrowLeftOutlined />}
             onClick={() => navigate('/entrevistas')}
-            style={{ background: '#21262d', border: '1px solid #30363d', color: '#8b949e' }}
           />
           <div>
             <Space size={10} align="center">
-              <Title level={3} style={{ color: '#e6edf3', margin: 0, fontWeight: 700, fontSize: 22 }}>
+              <Title level={3} style={{ color: '#262626', margin: 0, fontWeight: 700, fontSize: 22 }}>
                 {candidato ? `${candidato.nombres} ${candidato.apellidos}` : 'Nueva Entrevista'}
               </Title>
               <Tag style={{
-                background: `${estadoCfg.color}1a`, color: estadoCfg.color,
-                border: `1px solid ${estadoCfg.color}4d`, borderRadius: 6,
+                background: `${estadoCfg.color}15`, color: estadoCfg.color,
+                border: `1px solid ${estadoCfg.color}40`, borderRadius: 6,
                 fontSize: 11, fontWeight: 500,
               }}>
                 {estadoCfg.label}
               </Tag>
             </Space>
-            <Text style={{ color: '#6e7681', fontSize: 12 }}>
+            <Text style={{ color: '#8c8c8c', fontSize: 12 }}>
               {entrevista.codigo} · {new Date(entrevista.fecha_entrevista).toLocaleDateString('es-ES')}
             </Text>
           </div>
@@ -103,15 +102,17 @@ export default function DetalleEntrevistaPage() {
           <Space size={6}>
             {entrevista.entrevistadores.map((ee: any) => (
               <Space key={ee.entrevistadorId} size={4} align="center" style={{
-                background: 'rgba(22,119,255,0.08)', borderRadius: 8,
-                padding: '4px 10px', border: '1px solid rgba(22,119,255,0.15)',
+                background: 'rgba(22,119,255,0.06)',
+                borderRadius: 8,
+                padding: '4px 10px',
+                border: '1px solid rgba(22,119,255,0.15)',
               }}>
                 {ee.entrevistador.fotografia ? (
                   <Avatar size={20} src={`${API_URL}${ee.entrevistador.fotografia}`} />
                 ) : (
                   <Avatar size={20} icon={<UserOutlined />} style={{ background: '#1677ff' }} />
                 )}
-                <Text style={{ color: '#58a6ff', fontSize: 12 }}>
+                <Text style={{ color: '#1677ff', fontSize: 12 }}>
                   {ee.entrevistador.nombre_completo.split(' ')[0]}
                 </Text>
               </Space>
@@ -120,7 +121,7 @@ export default function DetalleEntrevistaPage() {
           <Button
             icon={<FilePdfOutlined />}
             onClick={() => generarInformePDF(entrevista)}
-            style={{ background: 'rgba(63,185,80,0.1)', border: '1px solid rgba(63,185,80,0.2)', color: '#3fb950', height: 38 }}
+            style={{ background: 'rgba(82,196,26,0.08)', border: '1px solid rgba(82,196,26,0.2)', color: '#15803d', height: 38 }}
           >
             Generar PDF
           </Button>
