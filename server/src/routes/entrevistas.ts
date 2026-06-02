@@ -121,7 +121,7 @@ entrevistasRouter.get('/:id', async (req: AuthRequest, res: Response): Promise<v
         drogas_alcohol: true, 
         judicial: true, 
         infiltracion: {
-          include: { tatuaje: true }
+          include: { tatuajes: true }
         }, 
         validaciones: true,
         // Traemos finanzas con sus listas anidadas
