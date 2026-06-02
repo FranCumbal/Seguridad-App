@@ -44,7 +44,8 @@ type PersonalDataForm = z.infer<typeof schema>;
 
 interface Props { entrevistaId: number; data: any; onSaved: () => void; }
 
-const label = (text: string) => <span style={{ color: '#8b949e', fontSize: 12 }}>{text}</span>;
+// Modificado: Eliminamos el color fijo para que respete el tema de Ant Design
+const label = (text: string) => <span style={{ fontSize: 12 }}>{text}</span>;
 
 export default function DatosPersonalesTab({ entrevistaId, data, onSaved }: Props) {
   const { message } = App.useApp();
@@ -93,7 +94,7 @@ export default function DatosPersonalesTab({ entrevistaId, data, onSaved }: Prop
   };
 
   const errMsg = (field: keyof PersonalDataForm) =>
-    errors[field] ? <span style={{ color: '#f85149', fontSize: 11 }}>{errors[field]?.message as string}</span> : null;
+    errors[field] ? <span style={{ color: '#ff4d4f', fontSize: 11 }}>{errors[field]?.message as string}</span> : null;
 
   const currentPhotoUrl = data?.fotografia ? `${API_URL}${data.fotografia}` : null;
   const previewUrl = fileList[0]?.originFileObj
@@ -107,7 +108,8 @@ export default function DatosPersonalesTab({ entrevistaId, data, onSaved }: Prop
       <div style={{
         display: 'flex', flexDirection: 'column', alignItems: 'center',
         gap: 10, marginBottom: 28, paddingBottom: 24,
-        borderBottom: '1px solid #21262d',
+        // Modificado: Borde más sutil para tema claro
+        borderBottom: '1px solid #f0f0f0', 
       }}>
         {previewUrl || currentPhotoUrl ? (
           <img
@@ -115,14 +117,17 @@ export default function DatosPersonalesTab({ entrevistaId, data, onSaved }: Prop
             alt="Foto del candidato"
             style={{
               width: 110, height: 110, objectFit: 'cover',
-              borderRadius: 12, border: '3px solid #21262d',
+              borderRadius: 12, 
+              // Modificado: Borde para tema claro
+              border: '1px solid #d9d9d9', 
             }}
           />
         ) : (
           <Avatar
             size={110}
             icon={<UserOutlined />}
-            style={{ background: 'linear-gradient(135deg, #1677ff, #0d3380)', border: '3px solid #21262d' }}
+            // Modificado: Se quita el borde oscuro
+            style={{ background: 'linear-gradient(135deg, #1677ff, #0d3380)' }}
           />
         )}
         <Upload
@@ -136,20 +141,20 @@ export default function DatosPersonalesTab({ entrevistaId, data, onSaved }: Prop
           <Button
             size="small"
             icon={<UploadOutlined />}
-            style={{ background: '#21262d', border: '1px solid #30363d', color: '#8b949e' }}
+            // Modificado: Se quitan los estilos forzados (fondo y borde oscuros)
           >
             {currentPhotoUrl ? 'Cambiar foto' : 'Subir foto del candidato'}
           </Button>
         </Upload>
         {fileList[0] && (
-          <span style={{ fontSize: 11, color: '#3fb950' }}>
+          <span style={{ fontSize: 11, color: '#52c41a' }}> {/* Color éxito Ant Design */}
             ✓ {fileList[0].name} — se guardará al presionar "Guardar"
           </span>
         )}
       </div>
 
       {/* SECCIÓN 1: IDENTIFICACIÓN */}
-      <p style={{ fontSize: 11, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.07em', color: '#6e7681', marginBottom: 14 }}>
+      <p style={{ fontSize: 11, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.07em', color: '#8c8c8c', marginBottom: 14 }}>
         Información Personal
       </p>
       <Row gutter={[16, 0]}>
@@ -222,10 +227,10 @@ export default function DatosPersonalesTab({ entrevistaId, data, onSaved }: Prop
         </Col>
       </Row>
 
-      <Divider style={{ borderColor: '#21262d', margin: '8px 0 16px' }} />
+      <Divider style={{ margin: '8px 0 16px' }} />
 
       {/* SECCIÓN 2: CONTACTO Y RESIDENCIA */}
-      <p style={{ fontSize: 11, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.07em', color: '#6e7681', marginBottom: 14 }}>
+      <p style={{ fontSize: 11, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.07em', color: '#8c8c8c', marginBottom: 14 }}>
         Contacto y Residencia
       </p>
       <Row gutter={[16, 0]}>
@@ -282,10 +287,10 @@ export default function DatosPersonalesTab({ entrevistaId, data, onSaved }: Prop
         </Col>
       </Row>
 
-      <Divider style={{ borderColor: '#21262d', margin: '8px 0 16px' }} />
+      <Divider style={{ margin: '8px 0 16px' }} />
 
       {/* SECCIÓN 3: LABORAL Y SALUD */}
-      <p style={{ fontSize: 11, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.07em', color: '#6e7681', marginBottom: 14 }}>
+      <p style={{ fontSize: 11, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.07em', color: '#8c8c8c', marginBottom: 14 }}>
         Laboral y Salud
       </p>
       <Row gutter={[16, 0]}>

@@ -138,7 +138,7 @@ export default function InfiltracionTab({ entrevistaId, data, onSaved }: Props) 
     <div className="animate-fade-in" style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
 
       {/* SECCIÓN 1: INTENCIONES E INFILTRACIÓN */}
-      <Card size="small" title={<Text style={{ fontSize: 13, color: '#8b949e' }}>Evaluación de Intenciones e Infiltración Corporativa</Text>}>
+      <Card size="small" title={<Text style={{ fontSize: 13, color: '#8c8c8c' }}>Evaluación de Intenciones e Infiltración Corporativa</Text>}>
         <Row gutter={[16, 20]}>
           <Col span={24}>
             <Text className="block mb-1 text-sm font-medium">1. ¿Cuál es su motivación principal para postularse a ingresar a esta empresa?</Text>
@@ -175,7 +175,7 @@ export default function InfiltracionTab({ entrevistaId, data, onSaved }: Props) 
       </Card>
 
       {/* SECCIÓN 2: TATUAJES */}
-      <Card size="small" title={<Text style={{ fontSize: 13, color: '#8b949e' }}>Identificación Visual — Tatuajes</Text>}>
+      <Card size="small" title={<Text style={{ fontSize: 13, color: '#8c8c8c' }}>Identificación Visual — Tatuajes</Text>}>
         <Row gutter={[16, 16]}>
           <Col span={24}>
             <Text style={{ fontSize: 13, fontWeight: 500, display: 'block', marginBottom: 8 }}>
@@ -193,18 +193,18 @@ export default function InfiltracionTab({ entrevistaId, data, onSaved }: Props) 
 
           {form.tiene_tatuajes && (
             <Col span={24}>
-              <Divider orientation="left" style={{ color: '#8b949e', fontSize: 12, marginTop: 4 }}>
+              <Divider orientation="left" style={{ color: '#8c8c8c', fontSize: 12, marginTop: 4 }}>
                 Registro de tatuajes
               </Divider>
 
               {tatuajes.length === 0 && (
                 <div style={{
                   textAlign: 'center', padding: '18px 0',
-                  background: 'rgba(255,255,255,0.02)',
-                  border: '1px dashed #30363d',
+                  background: '#fafafa', // Cambiado a tema claro
+                  border: '1px dashed #d9d9d9', // Cambiado a tema claro
                   borderRadius: 8, marginBottom: 12,
                 }}>
-                  <Text style={{ color: '#484f58', fontSize: 12 }}>
+                  <Text style={{ color: '#8c8c8c', fontSize: 12 }}>
                     No hay tatuajes registrados. Use el botón para agregar.
                   </Text>
                 </div>
@@ -214,17 +214,17 @@ export default function InfiltracionTab({ entrevistaId, data, onSaved }: Props) 
                 <div
                   key={tat.key}
                   style={{
-                    background: '#1c2128',
-                    border: '1px solid #30363d',
+                    background: '#ffffff', // Cambiado a tema claro
+                    border: '1px solid #f0f0f0', // Cambiado a tema claro
                     borderRadius: 10,
                     padding: 16,
                     marginBottom: 12,
                   }}
                 >
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
-                    <Text style={{ color: '#58a6ff', fontWeight: 600, fontSize: 13 }}>
+                    <Text style={{ color: '#1677ff', fontWeight: 600, fontSize: 13 }}> {/* Azul estándar de AntD */}
                       Tatuaje #{idx + 1}
-                      {tat.id && <span style={{ fontSize: 10, color: '#6e7681', fontWeight: 400, marginLeft: 8 }}>(guardado)</span>}
+                      {tat.id && <span style={{ fontSize: 10, color: '#8c8c8c', fontWeight: 400, marginLeft: 8 }}>(guardado)</span>}
                     </Text>
                     <Popconfirm
                       title="¿Eliminar este tatuaje?"
@@ -241,7 +241,7 @@ export default function InfiltracionTab({ entrevistaId, data, onSaved }: Props) 
                   <Row gutter={[16, 12]} align="top">
                     {/* Foto del tatuaje */}
                     <Col xs={24} md={8}>
-                      <Text style={{ color: '#8b949e', fontSize: 12, display: 'block', marginBottom: 8 }}>
+                      <Text style={{ color: '#8c8c8c', fontSize: 12, display: 'block', marginBottom: 8 }}>
                         Fotografía del tatuaje:
                       </Text>
                       <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start', gap: 8 }}>
@@ -253,18 +253,18 @@ export default function InfiltracionTab({ entrevistaId, data, onSaved }: Props) 
                               width: 130, height: 130,
                               objectFit: 'cover',
                               borderRadius: 8,
-                              border: '2px solid #30363d',
+                              border: '1px solid #d9d9d9', // Borde más sutil
                             }}
                           />
                         ) : (
                           <div style={{
                             width: 130, height: 130,
-                            background: '#0d1117',
+                            background: '#fafafa', // Fondo claro
                             borderRadius: 8,
-                            border: '2px dashed #30363d',
+                            border: '1px dashed #d9d9d9', // Borde punteado claro
                             display: 'flex', alignItems: 'center', justifyContent: 'center',
                           }}>
-                            <Text style={{ color: '#484f58', fontSize: 11 }}>Sin foto</Text>
+                            <Text style={{ color: '#8c8c8c', fontSize: 11 }}>Sin foto</Text>
                           </div>
                         )}
                         <Upload
@@ -278,15 +278,8 @@ export default function InfiltracionTab({ entrevistaId, data, onSaved }: Props) 
                           }}
                           accept="image/jpeg,image/png,image/webp"
                         >
-                          <Button
-                            size="small"
-                            icon={<UploadOutlined />}
-                            style={{
-                              background: 'rgba(22,119,255,0.1)',
-                              border: '1px solid rgba(22,119,255,0.2)',
-                              color: '#58a6ff',
-                            }}
-                          >
+                          {/* Se quitan los estilos en línea forzados */}
+                          <Button size="small" icon={<UploadOutlined />}>
                             {(tat.fotografia || tat.previewUrl) ? 'Cambiar foto' : 'Subir foto'}
                           </Button>
                         </Upload>
@@ -295,7 +288,7 @@ export default function InfiltracionTab({ entrevistaId, data, onSaved }: Props) 
 
                     {/* Descripción */}
                     <Col xs={24} md={16}>
-                      <Text style={{ color: '#8b949e', fontSize: 12, display: 'block', marginBottom: 6 }}>
+                      <Text style={{ color: '#8c8c8c', fontSize: 12, display: 'block', marginBottom: 6 }}>
                         Descripción y ubicación del tatuaje:
                       </Text>
                       <TextArea
@@ -311,14 +304,10 @@ export default function InfiltracionTab({ entrevistaId, data, onSaved }: Props) 
               ))}
 
               <Button
-                size="small"
+                type="dashed"
                 icon={<PlusOutlined />}
                 onClick={addTatuaje}
-                style={{
-                  background: 'rgba(22,119,255,0.1)',
-                  border: '1px solid rgba(22,119,255,0.2)',
-                  color: '#58a6ff',
-                }}
+                style={{ width: '100%', marginTop: 8 }}
               >
                 Agregar tatuaje
               </Button>
@@ -328,11 +317,11 @@ export default function InfiltracionTab({ entrevistaId, data, onSaved }: Props) 
       </Card>
 
       {/* SECCIÓN 3: NIVEL DE RIESGO */}
-      <Card size="small" title={<Text style={{ fontSize: 13, color: '#8b949e' }}>Dictamen de Seguridad e Infiltración</Text>}>
+      <Card size="small" title={<Text style={{ fontSize: 13, color: '#8c8c8c' }}>Dictamen de Seguridad e Infiltración</Text>}>
         <Row gutter={[16, 16]} align="middle">
           <Col span={24} md={10}>
             <Text style={{ fontWeight: 500, display: 'block', marginBottom: 4 }}>Nivel de Riesgo Evaluado:</Text>
-            <Text style={{ color: '#8b949e', fontSize: 12 }}>
+            <Text style={{ color: '#8c8c8c', fontSize: 12 }}>
               Defina el nivel de criticidad tras contrastar las declaraciones y el lenguaje corporal.
             </Text>
           </Col>
@@ -353,7 +342,7 @@ export default function InfiltracionTab({ entrevistaId, data, onSaved }: Props) 
 
       {/* OBSERVACIONES */}
       <Card size="small">
-        <Text style={{ display: 'block', marginBottom: 6, fontSize: 11, color: '#6e7681', textTransform: 'uppercase', letterSpacing: '0.06em' }}>
+        <Text style={{ display: 'block', marginBottom: 6, fontSize: 11, color: '#8c8c8c', textTransform: 'uppercase', letterSpacing: '0.06em' }}>
           Observaciones y Notas Técnicas del Evaluador
         </Text>
         <TextArea
