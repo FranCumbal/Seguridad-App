@@ -58,6 +58,37 @@ const generarCodigo = () => {
   return `ENT-${year}-${short}`;
 };
 
+// POST /api/entrevistas
+entrevistasRouter.post('/', async (req: AuthRequest, res: Response): Promise<void> => {
+  try {
+    const { entrevistadorIds, observaciones_iniciales } = req.body;
+
+    if (!entrevistadorIds || entrevistadorIds.length === 0) {
+      res.status(400).json({ success: false, message: 'Debe seleccionar al menos un entrevistador' });
+      return;
+    }
+
+    const nuevaEntrevista = await prisma.entrevista.create({
+      data: {
+        codigo: generarCodigo(),
+        observaciones_iniciales: observaciones_iniciales || null,
+        // Conectamos los entrevistadores seleccionados usando la tabla intermedia
+        entrevistadores: {
+          create: entrevistadorIds.map((id: number, index: number) => ({
+            entrevistadorId: id,
+            orden: index + 1, // Guardamos el orden en el que fueron seleccionados
+          })),
+        },
+      },
+    });
+
+    res.status(201).json({ success: true, data: nuevaEntrevista });
+  } catch (error) {
+    console.error('Error al crear entrevista:', error);
+    res.status(500).json({ success: false, message: 'Error al crear la entrevista' });
+  }
+});
+
 // GET /api/entrevistas
 entrevistasRouter.get('/', async (req: AuthRequest, res: Response): Promise<void> => {
   try {
