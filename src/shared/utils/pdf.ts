@@ -83,7 +83,7 @@ const fichaRow = (...fields: Array<[string, string]>): any => {
 // ─────────────────────────────────────────────────────────────
 // ENCABEZADO DE SECCIÓN
 // ─────────────────────────────────────────────────────────────
-const secHeader = (num: string, title: string): any => ({
+const secHeader = (num: string, title: string, mb: number = 6): any => ({
   table: {
     widths: ['*'],
     body: [[{
@@ -93,10 +93,10 @@ const secHeader = (num: string, title: string): any => ({
       color:     '#ffffff',
       fillColor: '#1e3a5f',
       margin:    [8, 5, 8, 5],
-    }]],
+    }]]
   },
   layout:  'noBorders',
-  margin: [0, 14, 0, 6],
+  margin: [0, 14, 0, mb], // Permite anular el margen para que la foto se pegue
 });
 
 // ─────────────────────────────────────────────────────────────
@@ -206,6 +206,20 @@ export const generarInformePDF = async (entrevista: any): Promise<void> => {
     ? await fetchBase64(`${API_URL}${dp.fotografia}`)
     : null;
 
+  // Cargar logos de la empresa desde la carpeta public
+  const baseUrl = import.meta.env.BASE_URL || '/';
+  const logoIzquierdo = await fetchBase64(`${window.location.origin}${baseUrl}logo-izq.png`);
+  const logoDerecho = await fetchBase64(`${window.location.origin}${baseUrl}logo-der.png`);
+
+  // Mapeo asíncrono en paralelo para obtener las fotos y descripciones de los tatuajes
+  const tatuajesArr = inf.tatuajes || [];
+  const tatuajesProcesados = await Promise.all(
+    tatuajesArr.map(async (t: any) => ({
+      descripcion: t.descripcion,
+      fotoBase64: t.fotografia ? await fetchBase64(`${API_URL}${t.fotografia}`) : null
+    }))
+  );
+
   const content: any[] = [];
 
   // ── ENCABEZADO GENERAL ──────────────────────────────────────
@@ -246,61 +260,115 @@ export const generarInformePDF = async (entrevista: any): Promise<void> => {
   });
 
   // ── 1. DATOS PERSONALES ─────────────────────────────────────
-  content.push(secHeader('1', 'Datos Personales'));
-
-  const datosBlock: any[] = [
-    fichaRow(
-      ['Cédula / Pasaporte', v(dp.cedula)],
-      ['Libreta Militar',    v(dp.libreta_militar)],
-      ['Género',             v(dp.genero)],
-      ['Estado Civil',       v(dp.estado_civil)],
-    ),
-    fichaRow(
-      ['Nombres Completos',   v(dp.nombres)],
-      ['Apellidos Completos', v(dp.apellidos)],
-    ),
-    fichaRow(
-      ['Fecha de Nacimiento',  fmtFecha(dp.fecha_nacimiento)],
-      ['Edad',                 dp.edad ? `${dp.edad} años` : '—'],
-      ['Lugar de Nacimiento',  v(dp.lugar_nacimiento)],
-      ['Estado de Salud',      v(dp.estado_salud)],
-    ),
-    fichaRow(
-      ['Provincia',          v(dp.provincia)],
-      ['Ciudad',             v(dp.ciudad)],
-      ['Barrio / Parroquia', v(dp.barrio_parroquia)],
-    ),
-    fichaRow(['Dirección Domiciliaria', v(dp.direccion)]),
-    fichaRow(
-      ['Teléfono Fijo',      v(dp.telefono_fijo)],
-      ['Celular',            v(dp.celular)],
-      ['Correo Electrónico', v(dp.correo)],
-    ),
-    fichaRow(
-      ['Área de Trabajo',  v(dp.area_trabajo)],
-      ['Cargo que Postula', v(dp.cargo_postula)],
-    ),
-  ];
+  content.push(secHeader('1', 'Datos Personales', candidatoFoto ? 0 : 6));
 
   if (candidatoFoto) {
+    const datosSuperiores = [
+      fichaRow(
+        ['Cédula / Pasaporte', v(dp.cedula)],
+        ['Género',             v(dp.genero)],
+        ['Estado Civil',       v(dp.estado_civil)],
+      ),
+      fichaRow(['Nombres Completos',   v(dp.nombres)]),
+      fichaRow(['Apellidos Completos', v(dp.apellidos)]),
+    ];
+
+    const datosInferiores = [
+      fichaRow(
+        ['Libreta Militar',      v(dp.libreta_militar)],
+        ['Fecha de Nacimiento',  fmtFecha(dp.fecha_nacimiento)],
+        ['Edad',                 dp.edad ? `${dp.edad} años` : '—'],
+        ['Estado de Salud',      v(dp.estado_salud)],
+      ),
+      fichaRow(
+        ['Lugar de Nacimiento',  v(dp.lugar_nacimiento)],
+        ['Provincia',            v(dp.provincia)],
+        ['Ciudad',               v(dp.ciudad)],
+        ['Barrio / Parroquia',   v(dp.barrio_parroquia)],
+      ),
+      fichaRow(['Dirección Domiciliaria', v(dp.direccion)]),
+      fichaRow(
+        ['Teléfono Fijo',      v(dp.telefono_fijo)],
+        ['Celular',            v(dp.celular)],
+        ['Correo Electrónico', v(dp.correo)],
+      ),
+      fichaRow(
+        ['Área de Trabajo',  v(dp.area_trabajo)],
+        ['Cargo que Postula', v(dp.cargo_postula)],
+      ),
+    ];
+
     content.push({
       columns: [
-        { width: '75%', stack: datosBlock },
-        {
-          width: '25%',
-          stack: [{
-            image:     candidatoFoto,
-            width:     100,
-            height:    120,
-            alignment: 'center',
-            margin:    [8, 0, 0, 0],
-          }],
+        { 
+          width: '*', 
+          stack: datosSuperiores,
+          margin: [0, 6, 0, 0] 
         },
+        {
+          width: 75,
+          margin: [10, 0, 0, 0], // Margen derecho en 0 fuerza alineación exacta con la barra azul superior
+          table: {
+            widths: [75],
+            body: [[
+              {
+                image: candidatoFoto,
+                width: 75,
+                height: 90,
+                alignment: 'center'
+              }
+            ]]
+          },
+          layout: {
+            hLineWidth: () => 1,
+            vLineWidth: () => 1,
+            hLineColor: () => '#1e3a5f', // Forzar azul corporativo puro, elimina recuadros negros oscuros
+            vLineColor: () => '#1e3a5f',
+            paddingLeft: () => 0,
+            paddingRight: () => 0,
+            paddingTop: () => 0,
+            paddingBottom: () => 0,
+          }
+        }
       ],
-      columnGap: 12,
+      margin: [0, 0, 0, 3]
     });
+
+    content.push(...datosInferiores);
   } else {
-    content.push(...datosBlock);
+    content.push(
+      fichaRow(
+        ['Cédula / Pasaporte', v(dp.cedula)],
+        ['Libreta Militar',    v(dp.libreta_militar)],
+        ['Género',             v(dp.genero)],
+        ['Estado Civil',       v(dp.estado_civil)],
+      ),
+      fichaRow(
+        ['Nombres Completos',   v(dp.nombres)],
+        ['Apellidos Completos', v(dp.apellidos)],
+      ),
+      fichaRow(
+        ['Fecha de Nacimiento',  fmtFecha(dp.fecha_nacimiento)],
+        ['Edad',                 dp.edad ? `${dp.edad} años` : '—'],
+        ['Lugar de Nacimiento',  v(dp.lugar_nacimiento)],
+        ['Estado de Salud',      v(dp.estado_salud)],
+      ),
+      fichaRow(
+        ['Provincia',          v(dp.provincia)],
+        ['Ciudad',             v(dp.ciudad)],
+        ['Barrio / Parroquia', v(dp.barrio_parroquia)],
+      ),
+      fichaRow(['Dirección Domiciliaria', v(dp.direccion)]),
+      fichaRow(
+        ['Teléfono Fijo',      v(dp.telefono_fijo)],
+        ['Celular',            v(dp.celular)],
+        ['Correo Electrónico', v(dp.correo)],
+      ),
+      fichaRow(
+        ['Área de Trabajo',  v(dp.area_trabajo)],
+        ['Cargo que Postula', v(dp.cargo_postula)],
+      ),
+    );
   }
 
   // ── 2. ENTORNO FAMILIAR ─────────────────────────────────────
@@ -590,7 +658,23 @@ export const generarInformePDF = async (entrevista: any): Promise<void> => {
   // ─────────────────────────────────────────────────────────────
   const docDefinition: any = {
     pageSize:    'A4',
-    pageMargins: [40, 71, 40, 50],
+    pageMargins: [40, 110, 40, 50], // Incremento sustancial del margen superior para evitar colisiones
+
+    // Encabezado con logos de escala máxima
+    header: () => {
+      return {
+        margin: [40, 15, 40, 0],
+        columns: [
+          logoIzquierdo 
+            ? { image: logoIzquierdo, fit: [200, 85], alignment: 'left', opacity: 0.35 } 
+            : { text: '', width: 200 },
+          { text: '', width: '*' }, 
+          logoDerecho 
+            ? { image: logoDerecho, fit: [200, 85], alignment: 'right', opacity: 0.35 } 
+            : { text: '', width: 200 },
+        ]
+      };
+    },
 
     // Footer elegante con línea azul y símbolo corporativo
     footer: (currentPage: number, pageCount: number): any => ({
@@ -636,61 +720,8 @@ export const generarInformePDF = async (entrevista: any): Promise<void> => {
   };
 
   // ─────────────────────────────────────────────────────────────
-  // GENERAR CON PDFMAKE Y SUPERPONER SOBRE LA PLANTILLA
+  // GENERAR Y DESCARGAR DIRECTAMENTE CON PDFMAKE
   // ─────────────────────────────────────────────────────────────
   const pdfDoc = (pdfMake as any).createPdf(docDefinition);
-
-  const contentBytes: ArrayBuffer = await new Promise((resolve) => {
-    pdfDoc.getBuffer((buf: Uint8Array) => resolve(buf.buffer as ArrayBuffer));
-  });
-
-  try {
-    const { PDFDocument } = await import('pdf-lib');
-
-    const templateRes = await fetch('/plantilla.pdf');
-    if (!templateRes.ok) throw new Error('Plantilla no encontrada en /plantilla.pdf');
-    const templateBytes = await templateRes.arrayBuffer();
-
-    const templateDoc = await PDFDocument.load(templateBytes);
-    const contentDoc  = await PDFDocument.load(contentBytes);
-    const outputDoc   = await PDFDocument.create();
-
-    const pageCount = contentDoc.getPageCount();
-
-    // Incrustar todas las páginas del contenido como XObjects
-    const embeddedContent = await outputDoc.embedPdf(contentDoc);
-
-    for (let i = 0; i < pageCount; i++) {
-      // Copia la página de la plantilla (con logos incluidos) al documento de salida
-      const [templatePageCopy] = await outputDoc.copyPages(templateDoc, [0]);
-      const page = outputDoc.addPage(templatePageCopy);
-
-      // Obtener dimensiones reales de la página copiada
-      const { width, height } = page.getSize();
-
-      // Dibujar el contenido generado encima de la plantilla
-      page.drawPage(embeddedContent[i], {
-        x:      0,
-        y:      0,
-        width,
-        height,
-      });
-    }
-
-    const finalBytes: Uint8Array = await outputDoc.save();
-    const blob = new Blob([finalBytes as any], { type: 'application/pdf' });
-    const url  = URL.createObjectURL(blob);
-    const a    = document.createElement('a');
-    a.href     = url;
-    a.download = `INFORME_${v(dp.cedula, 'CANDIDATO')}.pdf`;
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-    URL.revokeObjectURL(url);
-
-  } catch (err) {
-    // Si no hay plantilla, genera el PDF limpio igual
-    console.warn('Plantilla no disponible, generando sin fondo:', err);
-    pdfDoc.download(`INFORME_${v(dp.cedula, 'CANDIDATO')}.pdf`);
-  }
+  pdfDoc.download(`INFORME_${v(dp.cedula, 'CANDIDATO')}.pdf`);
 };
