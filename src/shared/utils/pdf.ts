@@ -90,7 +90,7 @@ const secHeader = (num: string, title: string, mb: number = 6): any => ({
       text:      `${num}.  ${title.toUpperCase()}`,
       fontSize:  9,
       bold:      true,
-      color:     '#ffffff',
+      color:      '#ffffff',
       fillColor: '#1e3a5f',
       margin:    [8, 5, 8, 5],
     }]]
@@ -115,7 +115,7 @@ const dataTable = (
         text:      h.toUpperCase(),
         fontSize:  7,
         bold:      true,
-        color:     '#374151',
+        color:      '#374151',
         fillColor: '#f1f5f9',
         margin:    [4, 4, 4, 4],
       })),
@@ -158,7 +158,7 @@ const textBox = (text: string): any => ({
     body: [[{
       text,
       fontSize:  8,
-      color:     '#374151',
+      color:      '#374151',
       italics:   true,
       margin:    [6, 4, 6, 4],
     }]],
@@ -193,13 +193,13 @@ export const generarInformePDF = async (entrevista: any): Promise<void> => {
   const dp   = entrevista.datos_personales || {};
   const fam  = entrevista.familia          || [];
   const est  = entrevista.estudios         || [];
-  const fin  = entrevista.finanzas         || {};
+  const fin  = entrevista.finanzas          || {};
   const labArr = entrevista.historial_laboral;
   const lab  = Array.isArray(labArr) ? (labArr[0] || {}) : (labArr || {});
   const drog = entrevista.drogas_alcohol   || {};
-  const jud  = entrevista.judicial         || {};
+  const jud  = entrevista.judicial          || {};
   const inf  = entrevista.infiltracion     || {};
-  const val_ = entrevista.validaciones     || {};
+  const val_ = entrevista.validaciones      || {};
   const entrevistadores = entrevista.entrevistadores || [];
 
   const candidatoFoto = dp.fotografia
@@ -227,14 +227,14 @@ export const generarInformePDF = async (entrevista: any): Promise<void> => {
     text:      'INFORME INTEGRAL DE EVALUACIÓN DE SEGURIDAD',
     fontSize:  13,
     bold:      true,
-    color:     '#1e3a5f',
+    color:      '#1e3a5f',
     alignment: 'center',
     margin:    [0, 0, 0, 4],
   });
   content.push({
     text: `Código: ${v(entrevista.codigo)}  ·  Fecha: ${fmtFecha(entrevista.fecha_entrevista)}  ·  Estado: ${v(entrevista.estado)}`,
     fontSize:  8,
-    color:     '#6b7280',
+    color:      '#6b7280',
     alignment: 'center',
     margin:    [0, 0, 0, 4],
   });
@@ -245,7 +245,7 @@ export const generarInformePDF = async (entrevista: any): Promise<void> => {
         .map((e: any) => e.entrevistador?.nombre_completo || '—')
         .join('  ·  ')}`,
       fontSize:  8,
-      color:     '#6b7280',
+      color:      '#6b7280',
       alignment: 'center',
       margin:    [0, 0, 0, 10],
     });
@@ -260,7 +260,9 @@ export const generarInformePDF = async (entrevista: any): Promise<void> => {
   });
 
   // ── 1. DATOS PERSONALES ─────────────────────────────────────
-  content.push(secHeader('1', 'Datos Personales', candidatoFoto ? 0 : 6));
+  // Extraemos el header del sistema de columnas para que ocupe el 100% del ancho
+  // y aplicamos un margen inferior de 6 para separar la foto y los datos.
+  content.push(secHeader('1', 'Datos Personales', 6));
 
   if (candidatoFoto) {
     const datosSuperiores = [
@@ -300,14 +302,9 @@ export const generarInformePDF = async (entrevista: any): Promise<void> => {
 
     content.push({
       columns: [
-        { 
-          width: '*', 
-          stack: datosSuperiores,
-          margin: [0, 6, 0, 0] 
-        },
         {
           width: 75,
-          margin: [10, 0, 0, 0], // Margen derecho en 0 fuerza alineación exacta con la barra azul superior
+          margin: [0, 0, 15, 0], // Margen derecho de 15 para separar la foto de la tabla de datos
           table: {
             widths: [75],
             body: [[
@@ -320,15 +317,20 @@ export const generarInformePDF = async (entrevista: any): Promise<void> => {
             ]]
           },
           layout: {
-            hLineWidth: () => 1,
-            vLineWidth: () => 1,
-            hLineColor: () => '#1e3a5f', // Forzar azul corporativo puro, elimina recuadros negros oscuros
+            hLineWidth: () => 0.5,
+            vLineWidth: () => 0.5,
+            hLineColor: () => '#1e3a5f',
             vLineColor: () => '#1e3a5f',
             paddingLeft: () => 0,
             paddingRight: () => 0,
             paddingTop: () => 0,
             paddingBottom: () => 0,
           }
+        },
+        { 
+          width: '*', 
+          stack: datosSuperiores,
+          margin: [5, 0, 0, 0] 
         }
       ],
       margin: [0, 0, 0, 3]
@@ -355,7 +357,7 @@ export const generarInformePDF = async (entrevista: any): Promise<void> => {
       ),
       fichaRow(
         ['Provincia',          v(dp.provincia)],
-        ['Ciudad',             v(dp.ciudad)],
+        ['Ciudad',               v(dp.ciudad)],
         ['Barrio / Parroquia', v(dp.barrio_parroquia)],
       ),
       fichaRow(['Dirección Domiciliaria', v(dp.direccion)]),
@@ -374,7 +376,7 @@ export const generarInformePDF = async (entrevista: any): Promise<void> => {
   // ── 2. ENTORNO FAMILIAR ─────────────────────────────────────
   content.push(secHeader('2', 'Entorno Familiar'));
   content.push(fichaRow(
-    ['Convive con',            v(entrevista.conviveCon?.replace(/,/g, ', '))],
+    ['Convive con',             v(entrevista.conviveCon?.replace(/,/g, ', '))],
     ['Calificación familiar',  v(entrevista.calificacionFamilia)],
   ));
 
@@ -497,7 +499,7 @@ export const generarInformePDF = async (entrevista: any): Promise<void> => {
   }
   content.push(fichaRow(
     ['¿Inconvenientes por ingesta de licor?', fmtBool(drog.inconvenientes_alcohol)],
-    ['¿Dependencia al licor?',               fmtBool(drog.dependencia_alcohol)],
+    ['¿Dependencia al licor?',                fmtBool(drog.dependencia_alcohol)],
   ));
 
   content.push(subTitle('Drogas Ilegales y Control de Confianza'));
@@ -569,6 +571,58 @@ export const generarInformePDF = async (entrevista: any): Promise<void> => {
     ['¿Instrucciones para causar daños?',     fmtBool(inf.instrucciones_dano)],
   ));
 
+  // MEJORA: Implementación de la visualización de tatuajes
+  if (tatuajesProcesados.length > 0) {
+    content.push(subTitle('Registro de Tatuajes y Marcas Identificativas'));
+
+    tatuajesProcesados.forEach((t) => {
+      content.push({
+        unbreakable: true, // FORZA A QUE LA IMAGEN Y LA DESCRIPCIÓN NUNCA SE SEPAREN DE PÁGINA
+        columns: [
+          {
+            width: 75, // Ancho fijo replicado de la foto del candidato
+            margin: [0, 0, 15, 0], // Margen derecho para separar de la descripción
+            table: {
+              widths: [75],
+              body: [[
+                t.fotoBase64 
+                  // Usamos fit en lugar de width/height absolutos para evitar que tatuajes largos/anchos se deformen
+                  ? { image: t.fotoBase64, fit: [75, 75], alignment: 'center' } 
+                  : { text: 'Sin foto', fontSize: 7, color: '#94a3b8', alignment: 'center', margin: [0, 30, 0, 30] }
+              ]]
+            },
+            layout: {
+              hLineWidth: () => 0.5, vLineWidth: () => 0.5,
+              // Usamos el color azul corporativo puro para la cuadrícula
+              hLineColor: () => '#1e3a5f', vLineColor: () => '#1e3a5f',
+              paddingLeft: () => 0, paddingRight: () => 0, paddingTop: () => 0, paddingBottom: () => 0
+            }
+          },
+          {
+            width: '*', // Ocupa espacio disponible para la descripción
+            margin: [5, 0, 0, 0], // Margen izquierdo para separar de la foto
+            table: {
+              widths: ['*'],
+              body: [[{
+                stack: [
+                  { text: 'DESCRIPCIÓN DEL TATUAJE', fontSize: 6.5, bold: true, color: '#64748b', margin: [0, 0, 0, 2] },
+                  { text: t.descripcion || 'Sin descripción', fontSize: 9, color: '#0f172a' }
+                ],
+                margin: [6, 5, 6, 5],
+              }]]
+            },
+            layout: {
+              hLineWidth: () => 0.5, vLineWidth: () => 0.5,
+              hLineColor: () => '#cbd5e1', vLineColor: () => '#cbd5e1',
+              fillColor: () => null
+            }
+          }
+        ],
+        margin: [0, 0, 0, 6] // Margen inferior del bloque para separar un tatuaje del siguiente
+      });
+    });
+  }
+
   // Nivel de riesgo — sin color, solo texto encasillado
   const riesgo = (inf.nivel_riesgo || 'BAJO').toUpperCase();
   content.push(fichaRow(['Nivel de Riesgo de Infiltración Evaluado', riesgo]));
@@ -606,7 +660,7 @@ export const generarInformePDF = async (entrevista: any): Promise<void> => {
         text:      `RESULTADO FINAL: ${resultado}`,
         fontSize:  13,
         bold:      true,
-        color:     rc.fg,
+        color:      rc.fg,
         fillColor: rc.bg,
         alignment: 'center',
         margin:    [0, 10, 0, 10],
