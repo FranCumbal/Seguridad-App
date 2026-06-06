@@ -12,14 +12,14 @@ const API_URL =
 // ─────────────────────────────────────────────────────────────
 // UTILIDADES
 // ─────────────────────────────────────────────────────────────
-const v = (val: any, fallback = 'No registra'): string =>
+const v = (val: any, fallback = '—'): string =>
   val === null || val === undefined || val === '' ? fallback : String(val);
 
 const fmtBool = (val: boolean | null | undefined): string =>
-  val === true ? 'SÍ' : val === false ? 'NO' : 'No registra';
+  val === true ? 'SÍ' : val === false ? 'NO' : '—';
 
 const fmtFecha = (val: any): string =>
-  val ? dayjs(val).format('DD/MM/YYYY') : 'No registra';
+  val ? dayjs(val).format('DD/MM/YYYY') : '—';
 
 const fmtMoneda = (val: any): string =>
   `$${Number(val || 0).toFixed(2)}`;
@@ -40,180 +40,148 @@ const fetchBase64 = async (url: string): Promise<string | null> => {
 };
 
 // ─────────────────────────────────────────────────────────────
-// ESTILOS
+// BLOQUE FICHA CLÍNICA
+// N campos en la misma fila → cada uno ocupa 100/N %
+// Uso: fichaRow(['Cédula','170000'], ['Género','M'], ['E.Civil','S'])
 // ─────────────────────────────────────────────────────────────
-const styles: any = {
-  documentTitle: {
-    fontSize: 13,
-    bold: true,
-    color: '#1e3a5f',
-    alignment: 'center',
-    margin: [0, 0, 0, 4],
-  },
-  documentSubtitle: {
-    fontSize: 8,
-    color: '#6b7280',
-    alignment: 'center',
-    margin: [0, 0, 0, 4],
-  },
-  sectionHeader: {
-    fontSize: 9,
-    bold: true,
-    color: '#ffffff',
-  },
-  label: {
-    fontSize: 8,
-    bold: true,
-    color: '#6b7280',
-  },
-  value: {
-    fontSize: 8,
-    color: '#111827',
-  },
-  th: {
-    fontSize: 7,
-    bold: true,
-    color: '#374151',
-    fillColor: '#e5e7eb',
-  },
-  td: {
-    fontSize: 8,
-    color: '#111827',
-  },
-  boolYes: { fontSize: 8, color: '#166534', bold: true },
-  boolNo:  { fontSize: 8, color: '#374151' },
+const fichaRow = (...fields: Array<[string, string]>): any => {
+  const n = fields.length;
+  return {
+    table: {
+      widths: Array(n).fill(`${(100 / n).toFixed(2)}%`),
+      body: [[
+        ...fields.map(([label, value]) => ({
+          stack: [
+            {
+              text: label.toUpperCase(),
+              fontSize: 6.5,
+              bold: true,
+              color: '#64748b',
+              margin: [0, 0, 0, 2],
+            },
+            {
+              text: value || '—',
+              fontSize: 9,
+              color: '#0f172a',
+            },
+          ],
+          margin: [6, 5, 6, 5],
+        })),
+      ]],
+    },
+    layout: {
+      hLineWidth: () => 0.5,
+      vLineWidth: () => 0.5,
+      hLineColor: () => '#cbd5e1',
+      vLineColor: () => '#cbd5e1',
+      fillColor:  () => null,
+    },
+    margin: [0, 0, 0, 3],
+  };
 };
 
 // ─────────────────────────────────────────────────────────────
-// LAYOUTS REUTILIZABLES
+// ENCABEZADO DE SECCIÓN
 // ─────────────────────────────────────────────────────────────
-const layoutLines = {
-  hLineWidth: (i: number, node: any) =>
-    i === 0 || i === node.table.body.length ? 0 : 0.5,
-  vLineWidth: () => 0,
-  hLineColor: () => '#e5e7eb',
-  paddingLeft:   () => 4,
-  paddingRight:  () => 4,
-  paddingTop:    () => 3,
-  paddingBottom: () => 3,
-};
-
-const layoutGrid = {
-  hLineWidth: (i: number, node: any) =>
-    i === 0 || i === node.table.body.length ? 0.5 : 0.25,
-  vLineWidth: () => 0.25,
-  hLineColor: () => '#d1d5db',
-  vLineColor: () => '#d1d5db',
-  fillColor:  (i: number) =>
-    i === 0 ? '#f3f4f6' : i % 2 === 0 ? '#f9fafb' : null,
-  paddingLeft:   () => 4,
-  paddingRight:  () => 4,
-  paddingTop:    () => 3,
-  paddingBottom: () => 3,
-};
-
-// ─────────────────────────────────────────────────────────────
-// BLOQUES DE CONSTRUCCIÓN
-// ─────────────────────────────────────────────────────────────
-
-/** Encabezado de sección con fondo azul */
 const secHeader = (num: string, title: string): any => ({
   table: {
     widths: ['*'],
     body: [[{
-      text:   `${num}. ${title.toUpperCase()}`,
-      style:  'sectionHeader',
+      text:      `${num}.  ${title.toUpperCase()}`,
+      fontSize:  9,
+      bold:      true,
+      color:     '#ffffff',
       fillColor: '#1e3a5f',
-      margin: [8, 5, 8, 5],
+      margin:    [8, 5, 8, 5],
     }]],
   },
-  layout: 'noBorders',
-  margin: [0, 14, 0, 8],
+  layout:  'noBorders',
+  margin: [0, 14, 0, 6],
 });
 
-/** Tabla de dos columnas: etiqueta | valor */
-const infoTable = (rows: [string, string][], widths = ['38%', '62%']): any => ({
-  table: {
-    widths,
-    body: rows.map(([label, value]) => [
-      { text: label, style: 'label' },
-      { text: value, style: 'value' },
-    ]),
-  },
-  layout: layoutLines,
-  margin: [0, 0, 0, 8],
-});
-
-/** Tabla de datos con cabecera */
+// ─────────────────────────────────────────────────────────────
+// TABLA DE DATOS CON CABECERA (listas: familiares, estudios…)
+// ─────────────────────────────────────────────────────────────
 const dataTable = (
   headers: string[],
-  rows: (string | number)[][],
+  rows: any[][],
   widths: string[],
 ): any => ({
   table: {
     headerRows: 1,
     widths,
     body: [
-      headers.map((h) => ({ text: h, style: 'th', margin: [2, 3, 2, 3] })),
+      headers.map(h => ({
+        text:      h.toUpperCase(),
+        fontSize:  7,
+        bold:      true,
+        color:     '#374151',
+        fillColor: '#f1f5f9',
+        margin:    [4, 4, 4, 4],
+      })),
       ...(rows.length > 0
-        ? rows.map((row) =>
-            row.map((cell) => ({
-              text:  String(cell ?? '—'),
-              style: 'td',
-              margin: [2, 2, 2, 2],
+        ? rows.map(row =>
+            row.map(cell => ({
+              text:   String(cell ?? '—'),
+              fontSize: 8,
+              color:  '#0f172a',
+              margin: [4, 3, 4, 3],
             }))
           )
         : [[{
             text:    'Sin registros',
             colSpan: headers.length,
-            style:   'td',
+            fontSize: 8,
+            color:   '#94a3b8',
             alignment: 'center',
-            color:   '#9ca3af',
-            margin:  [0, 6, 0, 6],
+            margin:  [0, 8, 0, 8],
           }]]),
     ],
   },
-  layout: layoutGrid,
+  layout: {
+    hLineWidth: (i: number, node: any) =>
+      i === 0 || i === node.table.body.length ? 0.8 : 0.3,
+    vLineWidth: () => 0.3,
+    hLineColor: () => '#cbd5e1',
+    vLineColor: () => '#cbd5e1',
+    fillColor:  (i: number) => i % 2 === 0 ? '#f8fafc' : null,
+  },
   margin: [0, 0, 0, 8],
 });
 
-/** Fila de sí/no con detalle opcional */
-const yesNoRow = (
-  label: string,
-  value: boolean | null | undefined,
-  detail?: string,
-): any[] => {
-  const boolText  = value !== null && value !== undefined ? fmtBool(value) : '';
-  const displayed = [boolText, detail].filter(Boolean).join('  →  ') || 'No registra';
-  const isYes     = value === true;
-  return [
-    { text: label,     style: 'label' },
-    { text: displayed, style: isYes ? 'boolYes' : 'boolNo' },
-  ];
-};
-
-/** Cuadro de texto con borde gris */
+// ─────────────────────────────────────────────────────────────
+// CUADRO DE TEXTO (observaciones, conceptos declarados)
+// ─────────────────────────────────────────────────────────────
 const textBox = (text: string): any => ({
   table: {
     widths: ['*'],
-    body: [[{ text, fontSize: 8, color: '#374151', margin: [6, 4, 6, 4] }]],
+    body: [[{
+      text,
+      fontSize:  8,
+      color:     '#374151',
+      italics:   true,
+      margin:    [6, 4, 6, 4],
+    }]],
   },
   layout: {
     hLineWidth: () => 0.5,
     vLineWidth: () => 0.5,
-    hLineColor: () => '#e5e7eb',
-    vLineColor: () => '#e5e7eb',
+    hLineColor: () => '#cbd5e1',
+    vLineColor: () => '#cbd5e1',
+    fillColor:  () => '#f8fafc',
   },
-  margin: [0, 0, 0, 8],
+  margin: [0, 0, 0, 6],
 });
 
-/** Separador horizontal */
-const divider = (margin = [0, 8, 0, 8]): any => ({
-  canvas: [{
-    type: 'line', x1: 0, y1: 0, x2: 515, y2: 0,
-    lineWidth: 0.5, lineColor: '#d1d5db',
-  }],
-  margin,
+// ─────────────────────────────────────────────────────────────
+// SUBTÍTULO INTERNO DE GRUPO (Alcohol, Bienes, etc.)
+// ─────────────────────────────────────────────────────────────
+const subTitle = (text: string): any => ({
+  text:   text.toUpperCase(),
+  fontSize: 7,
+  bold:   true,
+  color:  '#475569',
+  margin: [0, 8, 0, 4],
 });
 
 // ─────────────────────────────────────────────────────────────
@@ -222,7 +190,6 @@ const divider = (margin = [0, 8, 0, 8]): any => ({
 export const generarInformePDF = async (entrevista: any): Promise<void> => {
   if (!entrevista) return;
 
-  // Extraer datos con fallback seguro
   const dp   = entrevista.datos_personales || {};
   const fam  = entrevista.familia          || [];
   const est  = entrevista.estudios         || [];
@@ -235,32 +202,38 @@ export const generarInformePDF = async (entrevista: any): Promise<void> => {
   const val_ = entrevista.validaciones     || {};
   const entrevistadores = entrevista.entrevistadores || [];
 
-  // Foto del candidato en base64
   const candidatoFoto = dp.fotografia
     ? await fetchBase64(`${API_URL}${dp.fotografia}`)
     : null;
 
-  // ───── CONTENIDO DEL DOCUMENTO ─────────────────────────────
   const content: any[] = [];
 
-  // ── ENCABEZADO GENERAL ──
-  content.push(
-    { text: 'INFORME INTEGRAL DE EVALUACIÓN DE SEGURIDAD', style: 'documentTitle' },
-    {
-      text: `Código: ${v(entrevista.codigo)}  ·  Fecha: ${fmtFecha(entrevista.fecha_entrevista)}  ·  Estado: ${v(entrevista.estado)}`,
-      style: 'documentSubtitle',
-    },
-  );
+  // ── ENCABEZADO GENERAL ──────────────────────────────────────
+  content.push({
+    text:      'INFORME INTEGRAL DE EVALUACIÓN DE SEGURIDAD',
+    fontSize:  13,
+    bold:      true,
+    color:     '#1e3a5f',
+    alignment: 'center',
+    margin:    [0, 0, 0, 4],
+  });
+  content.push({
+    text: `Código: ${v(entrevista.codigo)}  ·  Fecha: ${fmtFecha(entrevista.fecha_entrevista)}  ·  Estado: ${v(entrevista.estado)}`,
+    fontSize:  8,
+    color:     '#6b7280',
+    alignment: 'center',
+    margin:    [0, 0, 0, 4],
+  });
 
   if (entrevistadores.length > 0) {
     content.push({
       text: `Entrevistadores: ${entrevistadores
         .map((e: any) => e.entrevistador?.nombre_completo || '—')
         .join('  ·  ')}`,
-      fontSize: 8,
-      color: '#6b7280',
+      fontSize:  8,
+      color:     '#6b7280',
       alignment: 'center',
-      margin: [0, 0, 0, 10],
+      margin:    [0, 0, 0, 10],
     });
   }
 
@@ -269,30 +242,50 @@ export const generarInformePDF = async (entrevista: any): Promise<void> => {
       type: 'line', x1: 0, y1: 0, x2: 515, y2: 0,
       lineWidth: 1.5, lineColor: '#1e3a5f',
     }],
-    margin: [0, 0, 0, 14],
+    margin: [0, 0, 0, 12],
   });
 
-  // ── SECCIÓN 1: DATOS PERSONALES ──
+  // ── 1. DATOS PERSONALES ─────────────────────────────────────
   content.push(secHeader('1', 'Datos Personales'));
 
-  const datosPersonalesTable = infoTable([
-    ['Cédula / Pasaporte',    v(dp.cedula)],
-    ['Libreta Militar',       v(dp.libreta_militar)],
-    ['Nombres',               v(dp.nombres)],
-    ['Apellidos',             v(dp.apellidos)],
-    ['Género',                v(dp.genero)],
-    ['Estado Civil',          v(dp.estado_civil)],
-    ['Fecha de Nacimiento',   fmtFecha(dp.fecha_nacimiento)],
-    ['Edad',                  dp.edad ? `${dp.edad} años` : 'No registra'],
-    ['Lugar de Nacimiento',   v(dp.lugar_nacimiento)],
-    ['Estado de Salud',       v(dp.estado_salud)],
-  ]);
+  const datosBlock: any[] = [
+    fichaRow(
+      ['Cédula / Pasaporte', v(dp.cedula)],
+      ['Libreta Militar',    v(dp.libreta_militar)],
+      ['Género',             v(dp.genero)],
+      ['Estado Civil',       v(dp.estado_civil)],
+    ),
+    fichaRow(
+      ['Nombres Completos',   v(dp.nombres)],
+      ['Apellidos Completos', v(dp.apellidos)],
+    ),
+    fichaRow(
+      ['Fecha de Nacimiento',  fmtFecha(dp.fecha_nacimiento)],
+      ['Edad',                 dp.edad ? `${dp.edad} años` : '—'],
+      ['Lugar de Nacimiento',  v(dp.lugar_nacimiento)],
+      ['Estado de Salud',      v(dp.estado_salud)],
+    ),
+    fichaRow(
+      ['Provincia',          v(dp.provincia)],
+      ['Ciudad',             v(dp.ciudad)],
+      ['Barrio / Parroquia', v(dp.barrio_parroquia)],
+    ),
+    fichaRow(['Dirección Domiciliaria', v(dp.direccion)]),
+    fichaRow(
+      ['Teléfono Fijo',      v(dp.telefono_fijo)],
+      ['Celular',            v(dp.celular)],
+      ['Correo Electrónico', v(dp.correo)],
+    ),
+    fichaRow(
+      ['Área de Trabajo',  v(dp.area_trabajo)],
+      ['Cargo que Postula', v(dp.cargo_postula)],
+    ),
+  ];
 
-  // Si hay foto, mostrar al lado de los datos
   if (candidatoFoto) {
     content.push({
       columns: [
-        { width: '75%', stack: [datosPersonalesTable] },
+        { width: '75%', stack: datosBlock },
         {
           width: '25%',
           stack: [{
@@ -304,114 +297,100 @@ export const generarInformePDF = async (entrevista: any): Promise<void> => {
           }],
         },
       ],
-      columnGap: 10,
+      columnGap: 12,
     });
   } else {
-    content.push(datosPersonalesTable);
+    content.push(...datosBlock);
   }
 
-  content.push(infoTable([
-    ['Provincia',            v(dp.provincia)],
-    ['Ciudad',               v(dp.ciudad)],
-    ['Barrio / Parroquia',   v(dp.barrio_parroquia)],
-    ['Dirección',            v(dp.direccion)],
-    ['Teléfono Fijo',        v(dp.telefono_fijo)],
-    ['Celular',              v(dp.celular)],
-    ['Correo Electrónico',   v(dp.correo)],
-    ['Área de Trabajo',      v(dp.area_trabajo)],
-    ['Cargo que Postula',    v(dp.cargo_postula)],
-  ]));
-
-  // ── SECCIÓN 2: ENTORNO FAMILIAR ──
+  // ── 2. ENTORNO FAMILIAR ─────────────────────────────────────
   content.push(secHeader('2', 'Entorno Familiar'));
-  content.push(infoTable([
-    ['Convive con',           v(entrevista.conviveCon?.replace(/,/g, ', '))],
-    ['Calificación familiar', v(entrevista.calificacionFamilia)],
-  ]));
+  content.push(fichaRow(
+    ['Convive con',            v(entrevista.conviveCon?.replace(/,/g, ', '))],
+    ['Calificación familiar',  v(entrevista.calificacionFamilia)],
+  ));
 
   if (fam.length > 0) {
     content.push(dataTable(
       ['Parentesco', 'Nombre Completo', 'Edad', 'Ocupación', 'Celular'],
       fam.map((f: any) => [
-        v(f.tipo_parentesco),
-        v(f.nombres),
-        f.edad ?? '—',
-        v(f.ocupacion),
-        v(f.celular),
+        v(f.tipo_parentesco), v(f.nombres), f.edad ?? '—',
+        v(f.ocupacion), v(f.celular),
       ]),
-      ['16%', '28%', '10%', '28%', '18%'],
+      ['16%', '29%', '10%', '27%', '18%'],
     ));
   } else {
-    content.push({ text: 'No se registraron familiares.', style: 'td', color: '#9ca3af', margin: [0, 0, 0, 8] });
+    content.push({ text: 'No se registraron familiares.', fontSize: 8, color: '#94a3b8', margin: [0, 0, 0, 8] });
   }
 
-  // ── SECCIÓN 3: FORMACIÓN ACADÉMICA ──
+  // ── 3. FORMACIÓN ACADÉMICA ──────────────────────────────────
   content.push(secHeader('3', 'Formación Académica'));
-
   if (est.length > 0) {
     content.push(dataTable(
       ['Nivel', 'Institución', 'Título Obtenido', 'Ciudad', 'Estado', 'Verif.'],
       est.map((e: any) => [
-        v(e.nivel),
-        v(e.institucion),
-        v(e.titulo_obtenido),
-        v(e.ciudad),
-        v(e.estado),
-        e.verificado ? 'SÍ' : 'NO',
+        v(e.nivel), v(e.institucion), v(e.titulo_obtenido),
+        v(e.ciudad), v(e.estado), e.verificado ? 'SÍ' : 'NO',
       ]),
-      ['13%', '24%', '24%', '15%', '14%', '10%'],
+      ['13%', '25%', '24%', '14%', '14%', '10%'],
     ));
   } else {
-    content.push({ text: 'No se registraron estudios.', style: 'td', color: '#9ca3af', margin: [0, 0, 0, 8] });
+    content.push({ text: 'No se registraron estudios.', fontSize: 8, color: '#94a3b8', margin: [0, 0, 0, 8] });
   }
 
-  // ── SECCIÓN 4: SITUACIÓN FINANCIERA ──
+  // ── 4. SITUACIÓN FINANCIERA ─────────────────────────────────
   content.push(secHeader('4', 'Situación Financiera'));
-  content.push(infoTable([
+  content.push(fichaRow(
     ['Ingresos Mensuales', fmtMoneda(fin.ingresos_mensuales)],
     ['Egresos Mensuales',  fmtMoneda(fin.egresos_mensuales)],
-  ]));
+  ));
 
-  const finSubSection = (title: string, tiene: boolean, items: any[], cols: string[], headers: string[], rowMapper: (i: any) => any[]) => {
-    content.push({ text: title, style: 'label', margin: [0, 4, 0, 4] });
+  const finSub = (
+    label: string,
+    tiene: boolean,
+    items: any[],
+    headers: string[],
+    widths: string[],
+    mapper: (i: any) => any[],
+  ) => {
+    content.push(subTitle(label));
     if (tiene && items?.length > 0) {
-      content.push(dataTable(headers, items.map(rowMapper), cols));
+      content.push(dataTable(headers, items.map(mapper), widths));
     } else {
-      content.push({ text: 'No declara.', fontSize: 8, color: '#9ca3af', margin: [0, 0, 0, 8] });
+      content.push({ text: 'No declara.', fontSize: 8, color: '#94a3b8', margin: [0, 0, 0, 6] });
     }
   };
 
-  finSubSection('Bienes Inmuebles', fin.tiene_bienes_inmuebles, fin.bienes_inmuebles,
-    ['70%', '30%'], ['Tipo de Bien', 'Valor Estimado'],
+  finSub('Bienes Inmuebles', fin.tiene_bienes_inmuebles, fin.bienes_inmuebles,
+    ['Tipo de Bien', 'Valor Estimado'], ['70%', '30%'],
     (b) => [v(b.tipo), fmtMoneda(b.valor)]);
 
-  finSubSection('Vehículos', fin.tiene_vehiculos, fin.vehiculos,
-    ['25%', '25%', '50%'], ['Tipo', 'Placa', 'Modelo / Año'],
+  finSub('Vehículos', fin.tiene_vehiculos, fin.vehiculos,
+    ['Tipo', 'Placa', 'Modelo / Año'], ['25%', '25%', '50%'],
     (veh) => [v(veh.tipo), v(veh.placa), v(veh.modelo)]);
 
-  finSubSection('Créditos Financieros', fin.tiene_creditos, fin.creditos,
-    ['70%', '30%'], ['Institución Financiera', 'Monto'],
+  finSub('Créditos Financieros', fin.tiene_creditos, fin.creditos,
+    ['Institución Financiera', 'Monto'], ['70%', '30%'],
     (c) => [v(c.entidad), fmtMoneda(c.monto)]);
 
-  finSubSection('Deudas Personales', fin.tiene_deudas_personales, fin.deudas_personales,
-    ['70%', '30%'], ['Detalle / Acreedor', 'Monto'],
+  finSub('Deudas Personales', fin.tiene_deudas_personales, fin.deudas_personales,
+    ['Detalle / Acreedor', 'Monto'], ['70%', '30%'],
     (d) => [v(d.detalle), fmtMoneda(d.monto)]);
 
-  finSubSection('Reportes Negativos en Centrales', fin.tiene_reportes_negativos, fin.reportes_negativos,
-    ['70%', '30%'], ['Entidad / Detalle', 'Monto'],
+  finSub('Reportes Negativos en Centrales', fin.tiene_reportes_negativos, fin.reportes_negativos,
+    ['Entidad / Detalle', 'Monto'], ['70%', '30%'],
     (r) => [v(r.detalle), fmtMoneda(r.monto)]);
 
   if (fin.observaciones) {
-    content.push({ text: `Observaciones: ${fin.observaciones}`, fontSize: 8, color: '#6b7280', italics: true, margin: [0, 0, 0, 8] });
+    content.push({ text: `Obs.: ${fin.observaciones}`, fontSize: 8, color: '#6b7280', italics: true, margin: [0, 0, 0, 8] });
   }
 
-  // ── SECCIÓN 5: HISTORIAL LABORAL ──
+  // ── 5. HISTORIAL LABORAL ────────────────────────────────────
   content.push(secHeader('5', 'Historial Laboral'));
-  content.push(infoTable([
-    ['Medio por el que conoció la vacante',          v(lab.medio_vacante)],
-    ['¿Cometió actos ilícitos en trabajos previos?', fmtBool(lab.acto_ilicito)],
-  ]));
-
+  content.push(fichaRow(
+    ['Medio por el que conoció la vacante',         v(lab.medio_vacante)],
+    ['¿Cometió actos ilícitos en emp. anteriores?', fmtBool(lab.acto_ilicito)],
+  ));
   if (lab.detalle_grave) {
     content.push(textBox(`Declaración sobre conductas graves: ${lab.detalle_grave}`));
   }
@@ -430,93 +409,73 @@ export const generarInformePDF = async (entrevista: any): Promise<void> => {
       ['24%', '22%', '30%', '13%', '11%'],
     ));
   } else {
-    content.push({ text: 'No se registraron experiencias laborales.', style: 'td', color: '#9ca3af', margin: [0, 0, 0, 8] });
+    content.push({ text: 'No se registraron experiencias laborales.', fontSize: 8, color: '#94a3b8', margin: [0, 0, 0, 8] });
   }
-
   if (lab.observaciones) {
-    content.push({ text: `Observaciones: ${lab.observaciones}`, fontSize: 8, color: '#6b7280', italics: true, margin: [0, 0, 0, 8] });
+    content.push({ text: `Obs.: ${lab.observaciones}`, fontSize: 8, color: '#6b7280', italics: true, margin: [0, 0, 0, 8] });
   }
 
-  // ── SECCIÓN 6: DROGAS Y ALCOHOL ──
+  // ── 6. DROGAS Y ALCOHOL ─────────────────────────────────────
   content.push(secHeader('6', 'Drogas y Alcohol'));
 
-  content.push({ text: 'CONSUMO DE BEBIDAS ALCOHÓLICAS', style: 'label', margin: [0, 2, 0, 4] });
-  content.push({
-    table: {
-      widths: ['60%', '40%'],
-      body: [
-        yesNoRow('¿Consume bebidas alcohólicas?', drog.consume_alcohol),
-        ...(drog.consume_alcohol ? [
-          yesNoRow('Última vez que consumió', undefined, v(drog.ultima_vez_alcohol)),
-          yesNoRow('Frecuencia de consumo',   undefined, v(drog.frecuencia_alcohol)),
-          yesNoRow('Bebida de preferencia',   undefined, v(drog.bebida_preferencia)),
-        ] : []),
-        yesNoRow('¿Inconvenientes personales/familiares por licor?', drog.inconvenientes_alcohol),
-        yesNoRow('¿Dependencia al licor?',                          drog.dependencia_alcohol),
-      ],
-    },
-    layout: layoutLines,
-    margin: [0, 0, 0, 8],
-  });
+  content.push(subTitle('Consumo de Bebidas Alcohólicas'));
+  content.push(fichaRow(['¿Consume bebidas alcohólicas?', fmtBool(drog.consume_alcohol)]));
+  if (drog.consume_alcohol) {
+    content.push(fichaRow(
+      ['Última vez que consumió', v(drog.ultima_vez_alcohol)],
+      ['Frecuencia de consumo',   v(drog.frecuencia_alcohol)],
+      ['Bebida de preferencia',   v(drog.bebida_preferencia)],
+    ));
+  }
+  content.push(fichaRow(
+    ['¿Inconvenientes por ingesta de licor?', fmtBool(drog.inconvenientes_alcohol)],
+    ['¿Dependencia al licor?',               fmtBool(drog.dependencia_alcohol)],
+  ));
 
-  content.push({ text: 'DROGAS ILEGALES', style: 'label', margin: [0, 4, 0, 4] });
-
+  content.push(subTitle('Drogas Ilegales y Control de Confianza'));
   if (drog.concepto_drogas) {
     content.push(textBox(`Concepto sobre drogas ilegales: ${drog.concepto_drogas}`));
   }
-
-  content.push({
-    table: {
-      widths: ['60%', '40%'],
-      body: [
-        yesNoRow('¿Ha consumido sustancias/drogas ilegales?',
-          drog.consume_drogas,
-          drog.consume_drogas ? v(drog.tipo_drogas) : undefined),
-        yesNoRow('¿Involucrado en actividades de narcotráfico?',    drog.involucrado_narcotrafico),
-        yesNoRow('¿Ha recibido propuestas del narcotráfico?',       drog.propuestas_narcotrafico),
-        yesNoRow('¿Entorno cercano involucrado en drogas?',         drog.entorno_drogas),
-      ],
-    },
-    layout: layoutLines,
-    margin: [0, 0, 0, 8],
-  });
-
+  content.push(fichaRow(
+    ['¿Ha consumido drogas ilegales?', drog.consume_drogas ? `SÍ — ${v(drog.tipo_drogas)}` : 'NO'],
+    ['¿Involucrado en narcotráfico?',  fmtBool(drog.involucrado_narcotrafico)],
+  ));
+  content.push(fichaRow(
+    ['¿Propuestas del narcotráfico?',        fmtBool(drog.propuestas_narcotrafico)],
+    ['¿Entorno cercano involucrado en drogas?', fmtBool(drog.entorno_drogas)],
+  ));
   if (drog.observaciones) {
-    content.push({ text: `Observaciones: ${drog.observaciones}`, fontSize: 8, color: '#6b7280', italics: true, margin: [0, 0, 0, 8] });
+    content.push({ text: `Obs.: ${drog.observaciones}`, fontSize: 8, color: '#6b7280', italics: true, margin: [0, 0, 0, 8] });
   }
 
-  // ── SECCIÓN 7: ANTECEDENTES JUDICIALES ──
+  // ── 7. ANTECEDENTES JUDICIALES ──────────────────────────────
   content.push(secHeader('7', 'Antecedentes Judiciales'));
-  content.push({
-    table: {
-      widths: ['65%', '35%'],
-      body: [
-        yesNoRow('¿Ha interpuesto demandas?',                   jud.interpuesto_demandas),
-        yesNoRow('¿Ha sido demandado?',                         jud.sido_demandado),
-        yesNoRow('¿Ha participado en procesos judiciales?',     jud.proceso_judicial),
-        yesNoRow('¿Ha tenido detenciones?',
-          jud.detenciones,
-          jud.detenciones ? v(jud.observacion_detenciones) : undefined),
-        yesNoRow('¿Tiene familiares detenidos?',
-          jud.familiares_detenidos,
-          jud.familiares_detenidos ? v(jud.observacion_familiares_detenidos) : undefined),
-        yesNoRow('¿Ha visitado centros de reclusión?',
-          jud.visitado_carcel,
-          jud.visitado_carcel ? v(jud.observacion_visitado_carcel) : undefined),
-        yesNoRow('Última verificación judicial', undefined, fmtFecha(jud.ultima_verificacion_judicial)),
-        yesNoRow('¿Ha manipulado armas de fuego?',
-          jud.manipulado_armas,
-          jud.manipulado_armas ? v(jud.motivo_armas) : undefined),
-        yesNoRow('¿Actividades fuera de la ley?',               jud.actividades_fuera_ley),
-        yesNoRow('¿Ha recibido propuestas ilegales?',           jud.propuestas_ilegales),
-        yesNoRow('¿Entorno con antecedentes penales?',          jud.entorno_ilegal_antecedentes),
-        yesNoRow('¿Ha participado en actos ilegales?',          jud.participacion_actos_ilegales),
-      ],
-    },
-    layout: layoutLines,
-    margin: [0, 0, 0, 8],
-  });
-
+  content.push(fichaRow(
+    ['¿Ha interpuesto demandas?', fmtBool(jud.interpuesto_demandas)],
+    ['¿Ha sido demandado?',       fmtBool(jud.sido_demandado)],
+    ['¿Procesos judiciales?',     fmtBool(jud.proceso_judicial)],
+  ));
+  content.push(fichaRow(
+    ['¿Ha tenido detenciones?',
+      jud.detenciones ? `SÍ — ${v(jud.observacion_detenciones)}` : 'NO'],
+    ['¿Familiares detenidos?',
+      jud.familiares_detenidos ? `SÍ — ${v(jud.observacion_familiares_detenidos)}` : 'NO'],
+  ));
+  content.push(fichaRow(
+    ['¿Ha visitado centros de reclusión?',
+      jud.visitado_carcel ? `SÍ — ${v(jud.observacion_visitado_carcel)}` : 'NO'],
+    ['Última verificación judicial', fmtFecha(jud.ultima_verificacion_judicial)],
+  ));
+  content.push(fichaRow(
+    ['¿Ha manipulado armas de fuego?',
+      jud.manipulado_armas ? `SÍ — ${v(jud.motivo_armas)}` : 'NO'],
+    ['¿Actividades fuera de la ley?', fmtBool(jud.actividades_fuera_ley)],
+    ['¿Propuestas ilegales recibidas?', fmtBool(jud.propuestas_ilegales)],
+  ));
+  content.push(fichaRow(
+    ['¿Entorno con antecedentes penales?',  fmtBool(jud.entorno_ilegal_antecedentes)],
+    ['¿Participación en actos ilegales?',   fmtBool(jud.participacion_actos_ilegales)],
+  ));
   if (jud.concepto_margen_ley) {
     content.push(textBox(`Concepto sobre grupos al margen de la ley: ${jud.concepto_margen_ley}`));
   }
@@ -524,80 +483,54 @@ export const generarInformePDF = async (entrevista: any): Promise<void> => {
     content.push(textBox(`Vínculos declarados: ${jud.vinculos_margen_ley}`));
   }
   if (jud.observaciones_generales) {
-    content.push({ text: `Observaciones: ${jud.observaciones_generales}`, fontSize: 8, color: '#6b7280', italics: true, margin: [0, 0, 0, 8] });
+    content.push({ text: `Obs.: ${jud.observaciones_generales}`, fontSize: 8, color: '#6b7280', italics: true, margin: [0, 0, 0, 8] });
   }
 
-  // ── SECCIÓN 8: CONTROL DE INFILTRACIÓN ──
+  // ── 8. CONTROL DE INFILTRACIÓN ──────────────────────────────
   content.push(secHeader('8', 'Control de Infiltración'));
-
   if (inf.motivacion_ingreso) {
     content.push(textBox(`Motivación para ingresar a la empresa: ${inf.motivacion_ingreso}`));
   }
+  content.push(fichaRow(
+    ['¿Contactos dentro de la empresa?',
+      inf.contactos_empresa ? `SÍ — ${v(inf.detalle_contactos)}` : 'NO'],
+    ['¿Intención de cometer actos ilícitos?', fmtBool(inf.intencion_ilicitos)],
+  ));
+  content.push(fichaRow(
+    ['¿Acuerdos con terceros para ilícitos?', fmtBool(inf.acuerdo_ilicitos)],
+    ['¿Instrucciones para causar daños?',     fmtBool(inf.instrucciones_dano)],
+  ));
 
-  content.push({
-    table: {
-      widths: ['65%', '35%'],
-      body: [
-        yesNoRow('¿Tiene contactos dentro de la empresa?',
-          inf.contactos_empresa,
-          inf.contactos_empresa ? v(inf.detalle_contactos) : undefined),
-        yesNoRow('¿Intención de cometer actos ilícitos internos?', inf.intencion_ilicitos),
-        yesNoRow('¿Acuerdos con terceros para actos ilícitos?',    inf.acuerdo_ilicitos),
-        yesNoRow('¿Ha recibido instrucciones para causar daños?',  inf.instrucciones_dano),
-      ],
-    },
-    layout: layoutLines,
-    margin: [0, 0, 0, 10],
-  });
-
-  // Semáforo de riesgo
-  const riesgo   = (inf.nivel_riesgo || 'BAJO').toUpperCase();
-  const riesgoCfg: Record<string, { bg: string; text: string }> = {
-    ALTO:  { bg: '#dc2626', text: '#ffffff' },
-    MEDIO: { bg: '#d97706', text: '#000000' },
-    BAJO:  { bg: '#16a34a', text: '#ffffff' },
-  };
-  const rc = riesgoCfg[riesgo] ?? riesgoCfg.BAJO;
-  content.push({
-    table: {
-      widths: ['*'],
-      body: [[{
-        text:      `NIVEL DE RIESGO DE INFILTRACIÓN: ${riesgo}`,
-        fontSize:  11,
-        bold:      true,
-        color:     rc.text,
-        fillColor: rc.bg,
-        alignment: 'center',
-        margin:    [0, 10, 0, 10],
-      }]],
-    },
-    layout: 'noBorders',
-    margin: [0, 0, 0, 8],
-  });
+  // Nivel de riesgo — sin color, solo texto encasillado
+  const riesgo = (inf.nivel_riesgo || 'BAJO').toUpperCase();
+  content.push(fichaRow(['Nivel de Riesgo de Infiltración Evaluado', riesgo]));
 
   if (inf.observaciones) {
-    content.push({ text: `Observaciones: ${inf.observaciones}`, fontSize: 8, color: '#6b7280', italics: true, margin: [0, 0, 0, 8] });
+    content.push({ text: `Obs.: ${inf.observaciones}`, fontSize: 8, color: '#6b7280', italics: true, margin: [0, 0, 0, 8] });
   }
 
-  // ── SECCIÓN 9: VALIDACIONES Y RESULTADO FINAL ──
+  // ── 9. VALIDACIONES Y RESULTADO FINAL ───────────────────────
   content.push(secHeader('9', 'Validaciones y Resultado Final'));
-  content.push(infoTable([
-    ['Documentos verificados',   fmtBool(val_.documentos_verificados)],
-    ['Referencias verificadas',  fmtBool(val_.referencias_verificadas)],
-    ['Aprobado por',             v(val_.aprobado_por)],
-    ['Fecha de validación',      fmtFecha(val_.fecha_validacion)],
-    ['Calificación',             val_.calificacion != null ? `${val_.calificacion} / 100` : 'No registra'],
+  content.push(fichaRow(
+    ['Documentos verificados',  fmtBool(val_.documentos_verificados)],
+    ['Referencias verificadas', fmtBool(val_.referencias_verificadas)],
+    ['Aprobado por',            v(val_.aprobado_por)],
+    ['Fecha de validación',     fmtFecha(val_.fecha_validacion)],
+  ));
+  content.push(fichaRow([
+    'Calificación obtenida',
+    val_.calificacion != null ? `${val_.calificacion} / 100` : '—',
   ]));
 
-  // Badge resultado final
+  // Resultado final — se mantiene con color por ser el veredicto
   const resultado = (val_.resultado_general || 'PENDIENTE').toUpperCase();
-  const resCfg: Record<string, { bg: string; text: string }> = {
-    APROBADO:    { bg: '#16a34a', text: '#ffffff' },
-    RECHAZADO:   { bg: '#dc2626', text: '#ffffff' },
-    CONDICIONAL: { bg: '#2563eb', text: '#ffffff' },
-    PENDIENTE:   { bg: '#d97706', text: '#000000' },
+  const resCfg: Record<string, { bg: string; fg: string }> = {
+    APROBADO:    { bg: '#16a34a', fg: '#ffffff' },
+    RECHAZADO:   { bg: '#dc2626', fg: '#ffffff' },
+    CONDICIONAL: { bg: '#2563eb', fg: '#ffffff' },
+    PENDIENTE:   { bg: '#d97706', fg: '#000000' },
   };
-  const resColor = resCfg[resultado] ?? resCfg.PENDIENTE;
+  const rc = resCfg[resultado] ?? resCfg.PENDIENTE;
   content.push({
     table: {
       widths: ['*'],
@@ -605,14 +538,14 @@ export const generarInformePDF = async (entrevista: any): Promise<void> => {
         text:      `RESULTADO FINAL: ${resultado}`,
         fontSize:  13,
         bold:      true,
-        color:     resColor.text,
-        fillColor: resColor.bg,
+        color:     rc.fg,
+        fillColor: rc.bg,
         alignment: 'center',
         margin:    [0, 10, 0, 10],
       }]],
     },
     layout: 'noBorders',
-    margin: [0, 4, 0, 12],
+    margin: [0, 6, 0, 10],
   });
 
   if (val_.recomendacion) {
@@ -622,8 +555,14 @@ export const generarInformePDF = async (entrevista: any): Promise<void> => {
     content.push(textBox(`Observaciones finales: ${val_.observaciones_finales}`));
   }
 
-  // ── BLOQUE DE FIRMAS ──
-  content.push(divider([0, 16, 0, 24]));
+  // ── BLOQUE DE FIRMAS ────────────────────────────────────────
+  content.push({
+    canvas: [{
+      type: 'line', x1: 0, y1: 0, x2: 515, y2: 0,
+      lineWidth: 0.5, lineColor: '#cbd5e1',
+    }],
+    margin: [0, 20, 0, 24],
+  });
   content.push({
     columns: [
       {
@@ -631,7 +570,7 @@ export const generarInformePDF = async (entrevista: any): Promise<void> => {
         stack: [
           { canvas: [{ type: 'line', x1: 0, y1: 0, x2: 210, y2: 0, lineWidth: 0.5, lineColor: '#374151' }] },
           { text: 'Evaluador / Analista de Seguridad', fontSize: 8, color: '#6b7280', alignment: 'center', margin: [0, 4, 0, 2] },
-          { text: 'Firma y Sello',                     fontSize: 7, color: '#9ca3af', alignment: 'center' },
+          { text: 'Firma y Sello', fontSize: 7, color: '#9ca3af', alignment: 'center' },
         ],
       },
       { width: '10%', text: '' },
@@ -639,8 +578,8 @@ export const generarInformePDF = async (entrevista: any): Promise<void> => {
         width: '45%',
         stack: [
           { canvas: [{ type: 'line', x1: 0, y1: 0, x2: 210, y2: 0, lineWidth: 0.5, lineColor: '#374151' }] },
-          { text: 'Candidato / Postulante',       fontSize: 8, color: '#6b7280', alignment: 'center', margin: [0, 4, 0, 2] },
-          { text: 'Firma y/o Huella Dactilar',    fontSize: 7, color: '#9ca3af', alignment: 'center' },
+          { text: 'Candidato / Postulante', fontSize: 8, color: '#6b7280', alignment: 'center', margin: [0, 4, 0, 2] },
+          { text: 'Firma y/o Huella Dactilar', fontSize: 7, color: '#9ca3af', alignment: 'center' },
         ],
       },
     ],
@@ -651,30 +590,49 @@ export const generarInformePDF = async (entrevista: any): Promise<void> => {
   // ─────────────────────────────────────────────────────────────
   const docDefinition: any = {
     pageSize:    'A4',
-    pageMargins: [40, 71, 40, 50],  // izq | sup(2.5cm) | der | inf
+    pageMargins: [40, 71, 40, 50],
 
-    footer: (currentPage: number, pageCount: number) => ({
-      columns: [
+    // Footer elegante con línea azul y símbolo corporativo
+    footer: (currentPage: number, pageCount: number): any => ({
+      margin: [40, 6, 40, 0],
+      stack: [
         {
-          text:   'SEGURIDAD GRUPO EMPRESARIAL ROJAS',
-          fontSize: 7,
-          color:  '#9ca3af',
-          margin: [40, 0, 0, 0],
+          canvas: [{
+            type: 'line', x1: 0, y1: 0, x2: 515, y2: 0,
+            lineWidth: 1.5, lineColor: '#1e3a5f',
+          }],
+          margin: [0, 0, 0, 5],
         },
         {
-          text:      `Página ${currentPage} de ${pageCount}`,
-          fontSize:  7,
-          color:     '#9ca3af',
-          alignment: 'right',
-          margin:    [0, 0, 40, 0],
+          columns: [
+            {
+              width: '*',
+              text: [
+                { text: '◆  ', fontSize: 9, color: '#1e3a5f' },
+                {
+                  text: 'SEGURIDAD GRUPO EMPRESARIAL ROJAS',
+                  fontSize: 8,
+                  bold: true,
+                  color: '#1e3a5f',
+                  characterSpacing: 0.5,
+                },
+              ],
+            },
+            {
+              width: 'auto',
+              text: [
+                { text: String(currentPage), fontSize: 10, bold: true, color: '#1e3a5f' },
+                { text: `  /  ${pageCount}`, fontSize: 8, color: '#94a3b8' },
+              ],
+              alignment: 'right',
+            },
+          ],
         },
       ],
-      margin: [0, 10, 0, 0],
     }),
 
     content,
-    styles,
-    defaultStyle: { font: 'Roboto', fontSize: 9, color: '#111827' },
+    defaultStyle: { font: 'Roboto', fontSize: 9, color: '#0f172a' },
   };
 
   // ─────────────────────────────────────────────────────────────
@@ -682,7 +640,6 @@ export const generarInformePDF = async (entrevista: any): Promise<void> => {
   // ─────────────────────────────────────────────────────────────
   const pdfDoc = (pdfMake as any).createPdf(docDefinition);
 
-  // Obtener los bytes del contenido generado
   const contentBytes: ArrayBuffer = await new Promise((resolve) => {
     pdfDoc.getBuffer((buf: Uint8Array) => resolve(buf.buffer as ArrayBuffer));
   });
@@ -690,12 +647,10 @@ export const generarInformePDF = async (entrevista: any): Promise<void> => {
   try {
     const { PDFDocument } = await import('pdf-lib');
 
-    // Cargar la plantilla desde public/
     const templateRes = await fetch('/plantilla.pdf');
     if (!templateRes.ok) throw new Error('Plantilla no encontrada en /plantilla.pdf');
     const templateBytes = await templateRes.arrayBuffer();
 
-    // Cargar ambos PDFs con pdf-lib
     const templateDoc = await PDFDocument.load(templateBytes);
     const contentDoc  = await PDFDocument.load(contentBytes);
     const outputDoc   = await PDFDocument.create();
@@ -705,7 +660,6 @@ export const generarInformePDF = async (entrevista: any): Promise<void> => {
     // Incrustar todas las páginas del contenido como XObjects
     const embeddedContent = await outputDoc.embedPdf(contentDoc);
 
-    // Para cada página: copiar la plantilla como base real y dibujar contenido encima
     for (let i = 0; i < pageCount; i++) {
       // Copia la página de la plantilla (con logos incluidos) al documento de salida
       const [templatePageCopy] = await outputDoc.copyPages(templateDoc, [0]);
@@ -723,7 +677,6 @@ export const generarInformePDF = async (entrevista: any): Promise<void> => {
       });
     }
 
-    // Descargar el PDF final
     const finalBytes: Uint8Array = await outputDoc.save();
     const blob = new Blob([finalBytes as any], { type: 'application/pdf' });
     const url  = URL.createObjectURL(blob);
