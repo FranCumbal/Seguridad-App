@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Button, Input, App, Typography, Switch, DatePicker, Row, Col, Popconfirm, Card, Select, Radio } from 'antd';
+import { Button, Input, App, Typography, Switch, DatePicker, Row, Col, Popconfirm, Card, Select, Radio, InputNumber } from 'antd';
 import { PlusOutlined, DeleteOutlined, SaveOutlined } from '@ant-design/icons';
 import dayjs from 'dayjs';
 import { entrevistasApi } from '@/infrastructure/api/services';
@@ -31,7 +31,7 @@ const opcionesVacante = ['Familiar', 'Amigo', 'Redes Sociales', 'Vecinos', 'Inte
 export default function HistorialLaboralTab({ entrevistaId, data, onSaved }: Props) {
   const { message } = App.useApp();
 
-  const [medioVacante, setMedioVacante] = useState<string | undefined>(undefined);
+  const [medioVacante, setMedioVacante] = useState<string | null>(null);
   const [actoIlicito, setActoIlicito] = useState<boolean>(false);
   const [detalleGrave, setDetalleGrave] = useState<string>('');
   const [observaciones, setObservaciones] = useState<string>('');
@@ -39,15 +39,20 @@ export default function HistorialLaboralTab({ entrevistaId, data, onSaved }: Pro
   const [saving, setSaving] = useState(false);
   const [expandedKey, setExpandedKey] = useState<string | null>(null);
 
-  useEffect(() => {
-    if (data) {
-      setMedioVacante(data.medio_vacante || undefined);
-      setActoIlicito(data.acto_ilicito ?? false);
-      setDetalleGrave(data.detalle_grave || '');
-      setObservaciones(data.observaciones || '');
+  const dataString = JSON.stringify(data);
 
-      if (data.experiencias?.length > 0) {
-        setTrabajos(data.experiencias.map((t: any, i: number) => ({
+  useEffect(() => {
+    // Prisma devuelve historial_laboral como arreglo por la estructura del schema
+    const actualData = Array.isArray(data) ? data[0] : data;
+
+    if (actualData) {
+      setMedioVacante(actualData.medio_vacante || undefined);
+      setActoIlicito(actualData.acto_ilicito ?? false);
+      setDetalleGrave(actualData.detalle_grave || '');
+      setObservaciones(actualData.observaciones || '');
+
+      if (actualData.experiencias?.length > 0) {
+        setTrabajos(actualData.experiencias.map((t: any, i: number) => ({
           ...t,
           key: t.id ? `t-${t.id}` : `t-${i}`,
           fecha_inicio: t.fecha_inicio ? dayjs(t.fecha_inicio) : null,
@@ -55,6 +60,8 @@ export default function HistorialLaboralTab({ entrevistaId, data, onSaved }: Pro
           certificado_laboral: t.certificado_laboral ?? false,
           trabajo_actual: t.trabajo_actual ?? false,
         })));
+      } else {
+        setTrabajos([]); // Limpiar la tabla de empleos si no existe ninguno
       }
     }
   }, [data]);
@@ -74,16 +81,16 @@ export default function HistorialLaboralTab({ entrevistaId, data, onSaved }: Pro
     setSaving(true);
     try {
       const payload = {
-        medio_vacante: medioVacante,
+        medio_vacante: medioVacante || null,
         acto_ilicito: actoIlicito,
-        detalle_grave: detalleGrave,
-        observaciones: observaciones,
+        detalle_grave: detalleGrave || null,
+        observaciones: observaciones || null,
         experiencias: trabajos.map((t) => ({
           id: t.id,
           empresa: t.empresa,
           cargo: t.cargo,
           trabajo_actual: t.trabajo_actual,
-          motivo_salida: t.trabajo_actual ? null : t.motivo_salida,
+          motivo_salida: t.trabajo_actual ? null : (t.motivo_salida || null),
           salario: t.salario ? Number(t.salario) : null,
           certificado_laboral: t.certificado_laboral,
           fecha_inicio: t.fecha_inicio ? dayjs(t.fecha_inicio).toISOString() : null,
@@ -111,7 +118,7 @@ export default function HistorialLaboralTab({ entrevistaId, data, onSaved }: Pro
             <Text style={{ display: 'block', marginBottom: 4, fontSize: 12, color: '#8c8c8c', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
               Se enteró de esta vacante por medio de:
             </Text>
-            <Select className="w-full" placeholder="Seleccione medio" value={medioVacante} onChange={setMedioVacante} size="small" style={{ width: '100%' }}>
+            <Select allowClear className="w-full" placeholder="Seleccione medio" value={medioVacante} onChange={setMedioVacante} size="small" style={{ width: '100%' }}>
               {opcionesVacante.map(opt => <Select.Option key={opt} value={opt}>{opt}</Select.Option>)}
             </Select>
           </Col>
@@ -197,7 +204,16 @@ export default function HistorialLaboralTab({ entrevistaId, data, onSaved }: Pro
                   </Col>
                   <Col xs={24} md={4}>
                     <Text style={{ color: '#595959', fontSize: 12, display: 'block', marginBottom: 4 }}>Salario ($)</Text>
-                    <Input type="number" value={t.salario} onChange={(e) => update(t.key, 'salario', e.target.value ? Number(e.target.value) : undefined)} placeholder="0.00" prefix="$" style={{ marginBottom: 12 }} />
+                    <InputNumber 
+                      min={0} 
+                      step={0.01} // Añadir esto permite escribir libremente puntos decimales sin que AntD bloquee el texto
+                      stringMode={false}
+                      value={t.salario} 
+                      onChange={(val) => update(t.key, 'salario', val)} 
+                      placeholder="0.00" 
+                      prefix="$" 
+                      style={{ width: '100%', marginBottom: 12 }} 
+                    />
                   </Col>
                   <Col xs={24} md={4}>
                     <Text style={{ color: '#595959', fontSize: 12, display: 'block', marginBottom: 4 }}>¿Trabajo actual?</Text>

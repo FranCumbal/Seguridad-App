@@ -54,6 +54,7 @@ export default function InfiltracionTab({ entrevistaId, data, onSaved }: Props) 
         nivel_riesgo: data.nivel_riesgo || 'BAJO',
         tiene_tatuajes: data.tiene_tatuajes ?? false,
       });
+      
       if (data.tatuajes?.length > 0) {
         setTatuajes(
           data.tatuajes.map((t: any) => ({
@@ -63,6 +64,8 @@ export default function InfiltracionTab({ entrevistaId, data, onSaved }: Props) 
             fotografia: t.fotografia || undefined,
           }))
         );
+      } else {
+        setTatuajes([]); // Agregado: Limpia la lista visual si se eliminan todos en BD
       }
     }
   }, [data]);
@@ -107,8 +110,19 @@ export default function InfiltracionTab({ entrevistaId, data, onSaved }: Props) 
       }
       setIdsAEliminar([]);
 
-      // 3. Crear nuevos tatuajes (sin id = nuevo)
-      for (const tat of tatuajes.filter(t => !t.id)) {
+      // NUEVO: 2.5. Recrear tatuajes existentes si el usuario les cambió la foto
+      const tatuajesAActualizar = tatuajes.filter(t => t.id && t.newFile);
+      for (const tat of tatuajesAActualizar) {
+        await entrevistasApi.deleteTatuaje(entrevistaId, tat.id!); // Borramos el antiguo
+        const fd = new window.FormData();
+        fd.append('descripcion', tat.descripcion);
+        fd.append('fotografia', tat.newFile!); // Subimos como nuevo con la nueva foto
+        await entrevistasApi.addTatuaje(entrevistaId, fd as any); 
+      }
+
+      // 3. Crear nuevos tatuajes puros (los que nunca tuvieron id)
+      const tatuajesNuevos = tatuajes.filter(t => !t.id);
+      for (const tat of tatuajesNuevos) {
         const fd = new window.FormData();
         fd.append('descripcion', tat.descripcion);
         if (tat.newFile) fd.append('fotografia', tat.newFile);

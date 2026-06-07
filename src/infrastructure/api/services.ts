@@ -46,7 +46,7 @@ export const entrevistasApi = {
     apiClient.get('/entrevistas', { params }),
 
   getById: (id: number) =>
-    apiClient.get(`/entrevistas/${id}`),
+    apiClient.get(`/entrevistas/${id}`, { params: { _cb: Date.now() } }),
 
   create: (data: { entrevistadorIds: number[]; observaciones_iniciales?: string }) =>
     apiClient.post('/entrevistas', data),
@@ -64,7 +64,10 @@ export const entrevistasApi = {
     apiClient.post(`/entrevistas/${entrevistaId}/tatuajes`, data, {
       headers: { 'Content-Type': 'multipart/form-data' },
     }),
-
+  
+  updateTatuaje: (entrevistaId: number, tatuajeId: number, data: FormData) => 
+    apiClient.put(`/entrevistas/${entrevistaId}/tatuajes/${tatuajeId}`, data),
+  
   deleteTatuaje: (entrevistaId: number, tatuajeId: number) =>
     apiClient.delete(`/entrevistas/${entrevistaId}/tatuajes/${tatuajeId}`),
 
@@ -79,8 +82,8 @@ export const entrevistasApi = {
   saveFinanzas: (id: number, data: any) =>
     apiClient.put(`/entrevistas/${id}/finanzas`, data),
 
-  saveHistorialLaboral: (id: number, trabajos: any[]) =>
-    apiClient.put(`/entrevistas/${id}/historial-laboral`, { trabajos }),
+  saveHistorialLaboral: (id: number, data: any) =>
+    apiClient.put(`/entrevistas/${id}/historial-laboral`, data), 
 
   saveDrogasAlcohol: (id: number, data: any) =>
     apiClient.put(`/entrevistas/${id}/drogas-alcohol`, data),

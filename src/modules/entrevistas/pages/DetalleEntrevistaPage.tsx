@@ -1,11 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import {
-  Typography, Button, Tabs, Space, Tag, Avatar, Spin, App,
-} from 'antd';
-import {
-  ArrowLeftOutlined, UserOutlined, FilePdfOutlined,
-} from '@ant-design/icons';
+import { Typography, Button, Tabs, Space, Tag, Avatar, Spin, App } from 'antd';
+import { ArrowLeftOutlined, UserOutlined, FilePdfOutlined } from '@ant-design/icons';
 import { entrevistasApi } from '@/infrastructure/api/services';
 import DatosPersonalesTab from '../components/tabs/DatosPersonalesTab';
 import FamiliaTab from '../components/tabs/FamiliaTab';
@@ -32,19 +28,52 @@ export default function DetalleEntrevistaPage() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const { message } = App.useApp();
+  
   const [entrevista, setEntrevista] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState('datos_personales');
 
+  // Carga silenciosa para usar después de guardar en cada pestaña
   const loadEntrevista = async () => {
     try {
       const res = await entrevistasApi.getById(Number(id));
       setEntrevista(res.data.data);
-    } catch { message.error('Error al cargar la entrevista'); navigate('/entrevistas'); }
-    finally { setLoading(false); }
+    } catch { 
+      message.error('Error al cargar la entrevista'); 
+      navigate('/entrevistas'); 
+    }
   };
 
-  useEffect(() => { loadEntrevista(); }, [id]);
+  useEffect(() => {
+    let isMounted = true;
+
+    const initialLoad = async () => {
+      setLoading(true);
+      try {
+        const res = await entrevistasApi.getById(Number(id));
+        if (isMounted) {
+          setEntrevista(res.data.data);
+        }
+      } catch {
+        if (isMounted) {
+          message.error('Error al cargar la entrevista');
+          navigate('/entrevistas');
+        }
+      } finally {
+        if (isMounted) {
+          setLoading(false);
+        }
+      }
+    };
+
+    initialLoad();
+
+    // Limpieza explícita del estado al desmontar la pantalla (Fundamental para evitar datos fantasmas)
+    return () => {
+      isMounted = false;
+      setEntrevista(null);
+    };
+  }, [id, navigate, message]);
 
   if (loading) return (
     <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '60vh' }}>
@@ -58,15 +87,15 @@ export default function DetalleEntrevistaPage() {
   const candidato = entrevista.datos_personales;
 
   const tabItems = [
-    { key: 'datos_personales',   label: '👤 Datos Personales',   children: <DatosPersonalesTab  entrevistaId={Number(id)} data={entrevista.datos_personales} onSaved={loadEntrevista} /> },
-    { key: 'familia',            label: '👨‍👩‍👧 Familia',             children: <FamiliaTab          entrevistaId={Number(id)} data={entrevista.familia}          onSaved={loadEntrevista} /> },
-    { key: 'estudios',           label: '🎓 Estudios',            children: <EstudiosTab         entrevistaId={Number(id)} data={entrevista.estudios}          onSaved={loadEntrevista} /> },
-    { key: 'finanzas',           label: '💰 Finanzas',            children: <FinanzasTab         entrevistaId={Number(id)} data={entrevista.finanzas}           onSaved={loadEntrevista} /> },
-    { key: 'historial_laboral',  label: '💼 Historial Laboral',  children: <HistorialLaboralTab entrevistaId={Number(id)} data={entrevista.historial_laboral}  onSaved={loadEntrevista} /> },
-    { key: 'drogas_alcohol',     label: '🔬 Drogas / Alcohol',    children: <DrogasAlcoholTab    entrevistaId={Number(id)} data={entrevista.drogas_alcohol}     onSaved={loadEntrevista} /> },
-    { key: 'judicial',           label: '⚖️ Judicial',             children: <JudicialTab         entrevistaId={Number(id)} data={entrevista.judicial}           onSaved={loadEntrevista} /> },
-    { key: 'infiltracion',       label: '🔍 Infiltración',         children: <InfiltracionTab     entrevistaId={Number(id)} data={entrevista.infiltracion}       onSaved={loadEntrevista} /> },
-    { key: 'validaciones',       label: '✅ Validaciones',         children: <ValidacionesTab     entrevistaId={Number(id)} data={entrevista.validaciones}       onSaved={loadEntrevista} /> },
+    { key: 'datos_personales',  label: '👤 Datos Personales',  children: <DatosPersonalesTab entrevistaId={Number(id)} data={entrevista.datos_personales} onSaved={loadEntrevista} /> },
+    { key: 'familia',           label: '👨‍👩‍👧 Familia',            children: <FamiliaTab         entrevistaId={Number(id)} data={entrevista.familia} entrevistaData={entrevista} onSaved={loadEntrevista} /> },
+    { key: 'estudios',          label: '🎓 Estudios',          children: <EstudiosTab        entrevistaId={Number(id)} data={entrevista.estudios}         onSaved={loadEntrevista} /> },
+    { key: 'finanzas',          label: '💰 Finanzas',          children: <FinanzasTab        entrevistaId={Number(id)} data={entrevista.finanzas}         onSaved={loadEntrevista} /> },
+    { key: 'historial_laboral', label: '💼 Historial Laboral', children: <HistorialLaboralTab entrevistaId={Number(id)} data={entrevista.historial_laboral} onSaved={loadEntrevista} /> },
+    { key: 'drogas_alcohol',    label: '🔬 Drogas / Alcohol',  children: <DrogasAlcoholTab   entrevistaId={Number(id)} data={entrevista.drogas_alcohol}   onSaved={loadEntrevista} /> },
+    { key: 'judicial',          label: '⚖️ Judicial',          children: <JudicialTab        entrevistaId={Number(id)} data={entrevista.judicial}         onSaved={loadEntrevista} /> },
+    { key: 'infiltracion',      label: '🔍 Infiltración',      children: <InfiltracionTab    entrevistaId={Number(id)} data={entrevista.infiltracion}     onSaved={loadEntrevista} /> },
+    { key: 'validaciones',      label: '✅ Validaciones',      children: <ValidacionesTab    entrevistaId={Number(id)} data={entrevista.validaciones}     onSaved={loadEntrevista} /> },
   ];
 
   return (

@@ -41,19 +41,27 @@ export default function FamiliaTab({ entrevistaId, data, entrevistaData, onSaved
   const [calificacionFamilia, setCalificacionFamilia] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
 
+  const dataString = JSON.stringify(data);
+  const entrevistaDataString = JSON.stringify({
+    conviveCon: entrevistaData?.conviveCon,
+    calificacionFamilia: entrevistaData?.calificacionFamilia
+  });
+
   useEffect(() => {
-    if (data?.length > 0) {
-      setMiembros(data.map((m, i) => ({ ...m, key: `m-${i}` })));
+    if (data && data.length > 0) {
+      setMiembros(data.map((m: any, i: number) => ({ ...m, key: m.id ? `m-${m.id}` : `m-${i}` })));
+    } else {
+      // Forzamos siempre a limpiar la tabla si el backend no manda familiares
+      setMiembros([]); 
     }
-    if (entrevistaData) {
-      if (entrevistaData.conviveCon) {
-        setConviveCon(entrevistaData.conviveCon.split(','));
-      }
-      if (entrevistaData.calificacionFamilia) {
-        setCalificacionFamilia(entrevistaData.calificacionFamilia);
-      }
-    }
-  }, [data, entrevistaData]);
+  }, [dataString]);
+
+  useEffect(() => {
+    // Eliminamos el 'if (entrevistaData)' para obligar a que el componente 
+    // siempre se sincronice de forma idéntica a la base de datos.
+    setConviveCon(entrevistaData?.conviveCon ? entrevistaData.conviveCon.split(',') : []);
+    setCalificacionFamilia(entrevistaData?.calificacionFamilia || null);
+  }, [entrevistaDataString]);
 
   const addMiembro = (parentesco: string = '') => {
     setMiembros((prev) => [...prev, { key: `m-${Date.now()}-${Math.random()}`, tipo_parentesco: parentesco, nombres: '' }]);
@@ -110,8 +118,12 @@ export default function FamiliaTab({ entrevistaId, data, entrevistaData, onSaved
     try {
       const payload = {
         conviveCon: conviveCon.length > 0 ? conviveCon.join(',') : null,
-        calificacionFamilia: calificacionFamilia,
-        familiares: miembros.filter(m => m.tipo_parentesco)
+        calificacionFamilia: calificacionFamilia || null,
+        // Limpiamos basura (createdAt, updatedAt) para que Prisma no aborte el guardado en silencio
+        familiares: miembros.filter(m => m.tipo_parentesco).map(m => {
+          const { key, id, createdAt, updatedAt, entrevistaId, ...clean } = m as any;
+          return clean;
+        })
       };
 
       await entrevistasApi.saveFamilia(entrevistaId, payload);
@@ -212,6 +224,7 @@ export default function FamiliaTab({ entrevistaId, data, entrevistaData, onSaved
             <Select 
               className="w-full"
               placeholder="Seleccionar calificación" 
+              allowClear
               value={calificacionFamilia}
               onChange={setCalificacionFamilia}
               options={opcionesCalificacion.map(opt => ({ label: opt, value: opt }))} 

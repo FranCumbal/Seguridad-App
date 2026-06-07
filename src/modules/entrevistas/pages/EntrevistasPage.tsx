@@ -20,6 +20,7 @@ const estadoMap: Record<string, { color: string; label: string }> = {
   ARCHIVADA:   { color: '#595959', label: 'Archivada'  },
   CANCELADA:   { color: '#b91c1c', label: 'Cancelada'  },
 };
+
 const resultadoMap: Record<string, { color: string; label: string }> = {
   PENDIENTE:   { color: '#d97706', label: 'Pendiente'   },
   APROBADO:    { color: '#15803d', label: 'Aprobado'    },
@@ -38,6 +39,7 @@ function useDebounce(fn: (...args: any[]) => void, delay: number) {
 export default function EntrevistasPage() {
   const navigate = useNavigate();
   const { modal, message } = App.useApp();
+  
   const [data, setData]       = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [total, setTotal]     = useState(0);
@@ -51,11 +53,16 @@ export default function EntrevistasPage() {
       const res = await entrevistasApi.getAll({ search: s, estado: e, page: p, limit: 15 });
       setData(res.data.data);
       setTotal(res.data.meta.total);
-    } catch { message.error('Error al cargar entrevistas'); }
-    finally { setLoading(false); }
+    } catch { 
+      message.error('Error al cargar entrevistas'); 
+    } finally { 
+      setLoading(false); 
+    }
   }, []);
 
-  useEffect(() => { fetchEntrevistas(1, '', undefined); }, []);
+  useEffect(() => { 
+    fetchEntrevistas(1, '', undefined); 
+  }, [fetchEntrevistas]);
 
   const debouncedSearch = useDebounce((value: string) => {
     setSearch(value);
@@ -73,6 +80,7 @@ export default function EntrevistasPage() {
     const nombre = record.datos_personales
       ? `${record.datos_personales.nombres} ${record.datos_personales.apellidos}`
       : record.codigo;
+      
     modal.confirm({
       title: 'Eliminar entrevista',
       content: `¿Eliminar la entrevista de "${nombre}"? Esta acción es irreversible.`,
@@ -80,18 +88,25 @@ export default function EntrevistasPage() {
       okButtonProps: { danger: true },
       cancelText: 'Cancelar',
       onOk: async () => {
-        await entrevistasApi.delete(record.id);
-        message.success('Entrevista eliminada');
-        fetchEntrevistas(page, search, estado);
+        try {
+          await entrevistasApi.delete(record.id);
+          message.success('Entrevista eliminada');
+          fetchEntrevistas(page, search, estado);
+        } catch {
+          message.error('Error al eliminar la entrevista');
+        }
       },
     });
   };
 
   const handlePDF = async (record: any) => {
     try {
+      // Como actualizamos el service, esto ya trae la info fresca sin caché
       const res = await entrevistasApi.getById(record.id);
       generarInformePDF(res.data.data);
-    } catch { message.error('Error al generar PDF'); }
+    } catch { 
+      message.error('Error al generar PDF'); 
+    }
   };
 
   const columns = [
@@ -175,6 +190,7 @@ export default function EntrevistasPage() {
       render: (_: any, r: any) => (
         <Space size={4}>
           <Tooltip title="Ver / Editar">
+            {/* Aquí está el cambio vital: solo pasamos la ruta, sin el "state" */}
             <Button size="small" icon={<EyeOutlined />}
               onClick={() => navigate(`/entrevistas/${r.id}`)}
               style={{ background: 'rgba(22,119,255,0.08)', border: '1px solid rgba(22,119,255,0.2)', color: '#1677ff' }}

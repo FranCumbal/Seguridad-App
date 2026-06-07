@@ -217,16 +217,24 @@ entrevistasRouter.put('/:id/finanzas', async (req: AuthRequest, res: Response): 
 entrevistasRouter.put('/:id/datos-personales', uploadCandidato.single('fotografia'), async (req: AuthRequest, res: Response): Promise<void> => {
   try {
     const entrevistaId = Number(req.params.id);
-    const { id, entrevistaId: _, ...rawBody } = req.body;
+    const { id, entrevistaId: _, createdAt, updatedAt, entrevista, ...rawBody } = req.body as any;
 
     const data: any = {};
     for (const [key, val] of Object.entries(rawBody)) {
+      // Ignoramos strings base64 que el frontend pueda enviar accidentalmente para evitar errores de truncado en SQL
+      if (key === 'fotografia' && typeof val === 'string' && val.startsWith('data:image')) {
+        continue;
+      }
       data[key] = (val === '' || val === 'null' || val === 'undefined') ? null : val;
     }
 
     if (data.fecha_nacimiento) data.fecha_nacimiento = new Date(data.fecha_nacimiento as string);
     if (data.edad) data.edad = parseInt(data.edad as string, 10);
-    if (req.file) data.fotografia = `/uploads/candidatos/${req.file.filename}`;
+    
+    // Asignación estricta del archivo
+    if (req.file) {
+      data.fotografia = `/uploads/candidatos/${req.file.filename}`;
+    }
 
     const resultado = await prisma.datosPersonales.upsert({
       where: { entrevistaId },
@@ -235,7 +243,7 @@ entrevistasRouter.put('/:id/datos-personales', uploadCandidato.single('fotografi
     });
     res.json({ success: true, data: resultado });
   } catch (error) {
-    console.error(error);
+    console.error('Error al guardar datos personales:', error);
     res.status(500).json({ success: false, message: 'Error al guardar datos personales' });
   }
 });
@@ -264,6 +272,37 @@ entrevistasRouter.post('/:id/tatuajes', uploadTatuaje.single('fotografia'), asyn
   } catch (error) {
     console.error(error);
     res.status(500).json({ success: false, message: 'Error al agregar tatuaje' });
+  }
+});
+
+// PUT /api/entrevistas/:id/tatuajes/:tatuajeId
+entrevistasRouter.put('/:id/tatuajes/:tatuajeId', uploadTatuaje.single('fotografia'), async (req: AuthRequest, res: Response): Promise<void> => {
+  try {
+    const { descripcion } = req.body;
+    const dataToUpdate: any = {};
+    
+    if (descripcion !== undefined) {
+      dataToUpdate.descripcion = (descripcion === 'null' || descripcion === '') ? null : descripcion;
+    }
+
+    // Permitimos que el frontend elimine la foto enviando null
+    if (req.body.fotografia === 'null' || req.body.fotografia === '') {
+      dataToUpdate.fotografia = null;
+    }
+
+    if (req.file) {
+      dataToUpdate.fotografia = `/uploads/tatuajes/${req.file.filename}`;
+    }
+
+    const tatuaje = await prisma.tatuaje.update({
+      where: { id: Number(req.params.tatuajeId) },
+      data: dataToUpdate,
+    });
+    
+    res.json({ success: true, data: tatuaje });
+  } catch (error) {
+    console.error('Error al actualizar tatuaje:', error);
+    res.status(500).json({ success: false, message: 'Error al actualizar tatuaje' });
   }
 });
 
@@ -366,36 +405,46 @@ entrevistasRouter.put('/:id/finanzas', async (req: AuthRequest, res: Response): 
 // PUT /api/entrevistas/:id/historial-laboral
 entrevistasRouter.put('/:id/historial-laboral', async (req: AuthRequest, res: Response): Promise<void> => {
   try {
+    console.log("PAYLOAD RECIBIDO EN BACKEND:", req.body); // <-- Agrega esta línea
     const entrevistaId = Number(req.params.id);
     const { medio_vacante, acto_ilicito, detalle_grave, observaciones, experiencias } = req.body;
 
-    // Normalizamos las fechas provenientes del frontend para que SQL Server las procese correctamente
-    const limpiarLista = (arr: any[]) => arr ? arr.map(({ key, id, historialLaboralId, ...rest }) => ({
+    const limpiarLista = (arr: any[]) => arr ? arr.map(({ key, id, historialLaboralId, createdAt, updatedAt, ...rest }) => ({
       ...rest,
       fecha_inicio: rest.fecha_inicio ? new Date(rest.fecha_inicio) : new Date(),
       fecha_fin: rest.fecha_fin ? new Date(rest.fecha_fin) : null,
     })) : [];
 
+    // Construcción segura del objeto update. Si un campo no viene, no lo sobrescribe con undefined/null.
+    const updateData: any = {};
+    if (medio_vacante !== undefined) updateData.medio_vacante = medio_vacante === '' ? null : medio_vacante;
+    if (acto_ilicito !== undefined) updateData.acto_ilicito = (String(acto_ilicito) === 'true');
+    if (detalle_grave !== undefined) updateData.detalle_grave = detalle_grave === '' ? null : detalle_grave;
+    if (observaciones !== undefined) updateData.observaciones = observaciones === '' ? null : observaciones;
+
+    // Limpiamos la lista independientemente para poder usarla en create sin el deleteMany
+    const experienciasLimpias = limpiarLista(experiencias);
+
+    // PREVENCIÓN DE REGRESIÓN: En UPDATE sí usamos deleteMany para limpiar los registros antiguos
+    if (experiencias !== undefined) {
+      updateData.experiencias = {
+        deleteMany: {},
+        create: experienciasLimpias as any
+      };
+    }
+
     const resultado = await prisma.historialLaboral.upsert({
       where: { entrevistaId },
-      update: {
-        medio_vacante,
-        acto_ilicito,
-        detalle_grave,
-        observaciones,
-        experiencias: {
-          deleteMany: {},
-          create: limpiarLista(experiencias) as any
-        }
-      },
+      update: updateData,
       create: {
         entrevistaId,
-        medio_vacante,
-        acto_ilicito,
-        detalle_grave,
-        observaciones,
+        medio_vacante: updateData.medio_vacante,
+        acto_ilicito: updateData.acto_ilicito || false,
+        detalle_grave: updateData.detalle_grave,
+        observaciones: updateData.observaciones,
+        // En CREATE no podemos enviar 'deleteMany', solo creamos los registros directamente
         experiencias: {
-          create: limpiarLista(experiencias) as any
+          create: experienciasLimpias as any
         }
       }
     });
