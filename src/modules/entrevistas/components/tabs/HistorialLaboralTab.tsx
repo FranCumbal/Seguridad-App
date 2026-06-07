@@ -101,8 +101,10 @@ export default function HistorialLaboralTab({ entrevistaId, data, onSaved }: Pro
       await entrevistasApi.saveHistorialLaboral(entrevistaId, payload as any);
       message.success('Historial laboral guardado exitosamente');
       onSaved();
-    } catch {
-      message.error('Error al guardar historial laboral');
+    } catch (error: any) {
+      // Extraemos el mensaje personalizado del backend si existe, o usamos el genérico
+      const errorMsg = error.response?.data?.message || 'Error al guardar historial laboral';
+      message.error(errorMsg, 5); // 5 segundos de duración para que pueda leerlo
     } finally {
       setSaving(false);
     }

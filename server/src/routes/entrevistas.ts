@@ -5,6 +5,7 @@ import { v4 as uuidv4 } from 'uuid';
 import multer from 'multer';
 import path from 'path';
 import fs from 'fs';
+import { Prisma } from '@prisma/client';
 
 // ── Multer: fotos de candidatos ──────────────────────────────
 const storageCandidatos = multer.diskStorage({
@@ -47,6 +48,40 @@ const uploadTatuaje = multer({
     else cb(new Error('Solo imágenes JPG, PNG o WEBP'));
   },
 });
+
+// --- HELPER: Limpieza de archivos físicos ---
+const borrarArchivoFisico = (rutaRelativa: string | null) => {
+  if (!rutaRelativa) return;
+  const filePath = path.join(__dirname, '../../', rutaRelativa);
+  if (fs.existsSync(filePath)) {
+    try { fs.unlinkSync(filePath); } catch (err) { console.error(err); }
+  }
+};
+
+// --- HELPER: Manejo de Errores de BD ---
+const handlePrismaError = (error: any, res: Response, defaultMessage: string) => {
+  console.error(`[API Error]: ${defaultMessage}`, error);
+  
+  if (error instanceof Prisma.PrismaClientKnownRequestError) {
+    // Código P2000: El texto excede el VarChar
+    if (error.code === 'P2000') {
+      const columna = error.meta?.column_name || 'un campo';
+      return res.status(400).json({ 
+        success: false, 
+        message: `El texto ingresado es demasiado largo para ${columna}. Por favor, resúmalo.` 
+      });
+    }
+    // Código P2002: Violación de restricción única (ej. código duplicado)
+    if (error.code === 'P2002') {
+      return res.status(400).json({ 
+        success: false, 
+        message: `Ya existe un registro con este dato único. Verifique que no haya duplicados.` 
+      });
+    }
+  }
+  
+  res.status(500).json({ success: false, message: defaultMessage });
+};
 
 export const entrevistasRouter = Router();
 entrevistasRouter.use(authMiddleware);
@@ -217,23 +252,25 @@ entrevistasRouter.put('/:id/finanzas', async (req: AuthRequest, res: Response): 
 entrevistasRouter.put('/:id/datos-personales', uploadCandidato.single('fotografia'), async (req: AuthRequest, res: Response): Promise<void> => {
   try {
     const entrevistaId = Number(req.params.id);
-    const { id, entrevistaId: _, createdAt, updatedAt, entrevista, ...rawBody } = req.body as any;
+    const { id, entrevistaId: _, ...rawBody } = req.body;
+
+    // Buscamos la data vieja para saber si ya tenía una foto
+    const oldData = await prisma.datosPersonales.findUnique({ where: { entrevistaId } });
 
     const data: any = {};
     for (const [key, val] of Object.entries(rawBody)) {
-      // Ignoramos strings base64 que el frontend pueda enviar accidentalmente para evitar errores de truncado en SQL
-      if (key === 'fotografia' && typeof val === 'string' && val.startsWith('data:image')) {
-        continue;
-      }
       data[key] = (val === '' || val === 'null' || val === 'undefined') ? null : val;
     }
 
     if (data.fecha_nacimiento) data.fecha_nacimiento = new Date(data.fecha_nacimiento as string);
     if (data.edad) data.edad = parseInt(data.edad as string, 10);
     
-    // Asignación estricta del archivo
     if (req.file) {
       data.fotografia = `/uploads/candidatos/${req.file.filename}`;
+      // Si subió una foto nueva, y ya existía una vieja, destruimos la vieja del disco duro
+      if (oldData?.fotografia && oldData.fotografia !== data.fotografia) {
+        borrarArchivoFisico(oldData.fotografia);
+      }
     }
 
     const resultado = await prisma.datosPersonales.upsert({
@@ -243,8 +280,7 @@ entrevistasRouter.put('/:id/datos-personales', uploadCandidato.single('fotografi
     });
     res.json({ success: true, data: resultado });
   } catch (error) {
-    console.error('Error al guardar datos personales:', error);
-    res.status(500).json({ success: false, message: 'Error al guardar datos personales' });
+    handlePrismaError(error, res, 'Error al guardar datos personales');
   }
 });
 
@@ -309,7 +345,18 @@ entrevistasRouter.put('/:id/tatuajes/:tatuajeId', uploadTatuaje.single('fotograf
 // DELETE /api/entrevistas/:id/tatuajes/:tatuajeId
 entrevistasRouter.delete('/:id/tatuajes/:tatuajeId', async (req: AuthRequest, res: Response): Promise<void> => {
   try {
-    await prisma.tatuaje.delete({ where: { id: Number(req.params.tatuajeId) } });
+    const tatuajeId = Number(req.params.tatuajeId);
+    // 1. Buscamos el tatuaje antes de borrarlo para obtener la ruta de la foto
+    const oldTatuaje = await prisma.tatuaje.findUnique({ where: { id: tatuajeId } });
+    
+    // 2. Lo eliminamos de la base de datos
+    await prisma.tatuaje.delete({ where: { id: tatuajeId } });
+    
+    // 3. Borramos el archivo físico asociado
+    if (oldTatuaje?.fotografia) {
+      borrarArchivoFisico(oldTatuaje.fotografia);
+    }
+    
     res.json({ success: true, message: 'Tatuaje eliminado' });
   } catch (error) {
     res.status(500).json({ success: false, message: 'Error al eliminar tatuaje' });
@@ -322,30 +369,31 @@ entrevistasRouter.put('/:id/familia', async (req: AuthRequest, res: Response): P
     const entrevistaId = Number(req.params.id);
     const { conviveCon, calificacionFamilia, familiares } = req.body;
 
-    await prisma.entrevista.update({
-      where: { id: entrevistaId },
-      data: {
-        conviveCon: conviveCon,
-        calificacionFamilia: calificacionFamilia
-      }
-    });
-
-    await prisma.familia.deleteMany({ where: { entrevistaId } });
-    
-    let resultado: any = null; 
-    
-    if (familiares && familiares.length > 0) {
-      resultado = await prisma.familia.createMany({
-        data: familiares.map((f: any) => {
-          const { key, id, ...datosLimpios } = f;
-          
-          return { 
-            ...datosLimpios, 
-            entrevistaId 
-          };
-        }),
+    // Ejecutamos todo dentro de una transacción segura de Prisma usando 'tx'
+    const resultado = await prisma.$transaction(async (tx) => {
+      await tx.entrevista.update({
+        where: { id: entrevistaId },
+        data: {
+          conviveCon: conviveCon,
+          calificacionFamilia: calificacionFamilia
+        }
       });
-    }
+
+      await tx.familia.deleteMany({ where: { entrevistaId } });
+      
+      if (familiares && familiares.length > 0) {
+        return await tx.familia.createMany({
+          data: familiares.map((f: any) => {
+            const { key, id, ...datosLimpios } = f;
+            return { 
+              ...datosLimpios, 
+              entrevistaId 
+            };
+          }),
+        });
+      }
+      return null;
+    });
     
     res.json({ success: true, data: resultado });
   } catch (error) {
@@ -360,18 +408,22 @@ entrevistasRouter.put('/:id/estudios', async (req: AuthRequest, res: Response): 
     const entrevistaId = Number(req.params.id);
     const { estudios } = req.body;
 
-    await prisma.estudio.deleteMany({ where: { entrevistaId } });
-    
-    const result = await prisma.estudio.createMany({
-      data: estudios.map((e: any) => {
-        // Extraemos 'key' y 'id' para ignorarlos
-        const { key, id, ...datosLimpios } = e;
-        
-        return {
-          ...datosLimpios,
-          entrevistaId
-        };
-      }),
+    // Ejecutamos todo dentro de una transacción segura de Prisma usando 'tx'
+    const result = await prisma.$transaction(async (tx) => {
+      await tx.estudio.deleteMany({ where: { entrevistaId } });
+      
+      if (estudios && estudios.length > 0) {
+        return await tx.estudio.createMany({
+          data: estudios.map((e: any) => {
+            const { key, id, ...datosLimpios } = e;
+            return {
+              ...datosLimpios,
+              entrevistaId
+            };
+          }),
+        });
+      }
+      return null;
     });
     
     res.json({ success: true, data: result });

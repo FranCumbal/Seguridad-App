@@ -104,29 +104,33 @@ export default function InfiltracionTab({ entrevistaId, data, onSaved }: Props) 
       };
       await entrevistasApi.saveInfiltracion(entrevistaId, payload);
 
-      // 2. Eliminar tatuajes marcados para borrar
-      for (const id of idsAEliminar) {
-        await entrevistasApi.deleteTatuaje(entrevistaId, id);
+      // 2. Eliminar tatuajes marcados para borrar (Ejecutado en paralelo)
+      if (idsAEliminar.length > 0) {
+        await Promise.all(idsAEliminar.map(id => entrevistasApi.deleteTatuaje(entrevistaId, id)));
+        setIdsAEliminar([]);
       }
-      setIdsAEliminar([]);
 
-      // NUEVO: 2.5. Recrear tatuajes existentes si el usuario les cambió la foto
+      // NUEVO: 2.5. Recrear tatuajes existentes si el usuario les cambió la foto (En paralelo)
       const tatuajesAActualizar = tatuajes.filter(t => t.id && t.newFile);
-      for (const tat of tatuajesAActualizar) {
-        await entrevistasApi.deleteTatuaje(entrevistaId, tat.id!); // Borramos el antiguo
-        const fd = new window.FormData();
-        fd.append('descripcion', tat.descripcion);
-        fd.append('fotografia', tat.newFile!); // Subimos como nuevo con la nueva foto
-        await entrevistasApi.addTatuaje(entrevistaId, fd as any); 
+      if (tatuajesAActualizar.length > 0) {
+        await Promise.all(tatuajesAActualizar.map(async (tat) => {
+          await entrevistasApi.deleteTatuaje(entrevistaId, tat.id!); 
+          const fd = new window.FormData();
+          fd.append('descripcion', tat.descripcion);
+          fd.append('fotografia', tat.newFile!); 
+          return entrevistasApi.addTatuaje(entrevistaId, fd as any);
+        }));
       }
 
-      // 3. Crear nuevos tatuajes puros (los que nunca tuvieron id)
+      // 3. Crear nuevos tatuajes puros (En paralelo)
       const tatuajesNuevos = tatuajes.filter(t => !t.id);
-      for (const tat of tatuajesNuevos) {
-        const fd = new window.FormData();
-        fd.append('descripcion', tat.descripcion);
-        if (tat.newFile) fd.append('fotografia', tat.newFile);
-        await entrevistasApi.addTatuaje(entrevistaId, fd as any);
+      if (tatuajesNuevos.length > 0) {
+        await Promise.all(tatuajesNuevos.map(tat => {
+          const fd = new window.FormData();
+          fd.append('descripcion', tat.descripcion);
+          if (tat.newFile) fd.append('fotografia', tat.newFile);
+          return entrevistasApi.addTatuaje(entrevistaId, fd as any);
+        }));
       }
 
       message.success('Dictamen de infiltración guardado correctamente');
