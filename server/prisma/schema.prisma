@@ -60,6 +60,7 @@ model Entrevista {
   // --- NUEVOS CAMPOS DEL MÓDULO FAMILIA ---
   conviveCon              String?  @db.VarChar(500) // Guardará el arreglo convertido a texto ej: "Padres,Hermanos"
   calificacionFamilia     String?  @db.VarChar(100) // Guardará "Unida", "Estable", etc.
+  lugar_hermanos           String?
   // ----------------------------------------
 
   createdAt               DateTime @default(now())

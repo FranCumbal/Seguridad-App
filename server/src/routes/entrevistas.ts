@@ -367,7 +367,8 @@ entrevistasRouter.delete('/:id/tatuajes/:tatuajeId', async (req: AuthRequest, re
 entrevistasRouter.put('/:id/familia', async (req: AuthRequest, res: Response): Promise<void> => {
   try {
     const entrevistaId = Number(req.params.id);
-    const { conviveCon, calificacionFamilia, familiares } = req.body;
+    // Agregamos lugar_hermanos a la desestructuración del req.body
+    const { conviveCon, calificacionFamilia, lugar_hermanos, familiares } = req.body;
 
     // Ejecutamos todo dentro de una transacción segura de Prisma usando 'tx'
     const resultado = await prisma.$transaction(async (tx) => {
@@ -375,7 +376,8 @@ entrevistasRouter.put('/:id/familia', async (req: AuthRequest, res: Response): P
         where: { id: entrevistaId },
         data: {
           conviveCon: conviveCon,
-          calificacionFamilia: calificacionFamilia
+          calificacionFamilia: calificacionFamilia,
+          lugar_hermanos: lugar_hermanos
         }
       });
 

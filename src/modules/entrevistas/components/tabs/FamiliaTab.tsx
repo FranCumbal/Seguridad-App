@@ -38,15 +38,16 @@ export default function FamiliaTab({ entrevistaId, data, entrevistaData, onSaved
   const { message } = App.useApp();
   const [miembros, setMiembros] = useState<Miembro[]>([]);
   const [conviveCon, setConviveCon] = useState<string[]>([]);
+  const [lugarHermanos, setLugarHermanos] = useState<string>(''); // Nuevo estado
   const [calificacionFamilia, setCalificacionFamilia] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
 
   const dataString = JSON.stringify(data);
   const entrevistaDataString = JSON.stringify({
     conviveCon: entrevistaData?.conviveCon,
+    lugar_hermanos: entrevistaData?.lugar_hermanos, // Sincronización
     calificacionFamilia: entrevistaData?.calificacionFamilia
   });
-
   useEffect(() => {
     if (data && data.length > 0) {
       setMiembros(data.map((m: any, i: number) => ({ ...m, key: m.id ? `m-${m.id}` : `m-${i}` })));
@@ -60,6 +61,7 @@ export default function FamiliaTab({ entrevistaId, data, entrevistaData, onSaved
     // Eliminamos el 'if (entrevistaData)' para obligar a que el componente 
     // siempre se sincronice de forma idéntica a la base de datos.
     setConviveCon(entrevistaData?.conviveCon ? entrevistaData.conviveCon.split(',') : []);
+    setLugarHermanos(entrevistaData?.lugar_hermanos || ''); // Inicializamos el valor
     setCalificacionFamilia(entrevistaData?.calificacionFamilia || null);
   }, [entrevistaDataString]);
 
@@ -113,11 +115,32 @@ export default function FamiliaTab({ entrevistaId, data, entrevistaData, onSaved
     return conteo;
   }, [miembros]);
 
+  const opcionesLugarHermanos = useMemo(() => {
+    // Buscamos cuántos hermanos están registrados actualmente en los contadores/tabla
+    const cantidadHermanos = conteoParentescos['Hermano/a'] || 0;
+    
+    // El total de hijos en la familia es la cantidad de hermanos + el candidato
+    const totalHijos = cantidadHermanos + 1;
+    
+    // Regla de negocio: mínimo 10 opciones, pero si hay más hijos, el límite sube
+    const limiteOpciones = Math.max(10, totalHijos);
+    
+    return Array.from({ length: limiteOpciones }).map((_, i) => {
+      const posicion = i + 1;
+      return {
+        // Label es lo que ve el usuario, Value es lo que se guarda en la Base de Datos
+        label: cantidadHermanos > 0 ? `${posicion}º (de ${totalHijos} hijos)` : `${posicion}º lugar`,
+        value: cantidadHermanos > 0 ? `${posicion}º de ${totalHijos}` : `${posicion}º`
+      };
+    });
+  }, [conteoParentescos]);
+
   const handleSave = async () => {
     setSaving(true);
     try {
       const payload = {
         conviveCon: conviveCon.length > 0 ? conviveCon.join(',') : null,
+        lugar_hermanos: lugarHermanos || null, // Enviamos al backend
         calificacionFamilia: calificacionFamilia || null,
         // Limpiamos basura (createdAt, updatedAt) para que Prisma no aborte el guardado en silencio
         familiares: miembros.filter(m => m.tipo_parentesco).map(m => {
@@ -211,15 +234,26 @@ export default function FamiliaTab({ entrevistaId, data, entrevistaData, onSaved
     <div className="animate-fade-in">
       <Card size="small" className="mb-4" title={<Text style={{ fontSize: 13, color: '#8b949e' }}>Dinámica Familiar</Text>}>
         <Row gutter={[16, 16]}>
-          <Col span={24} md={16}>
-            <Text className="block mb-2 text-sm font-medium">La persona evaluada manifiesta vivir en su lugar de residencia actualmente con:</Text>
+          <Col span={24} md={10}>
+            <Text className="block mb-2 text-sm font-medium">Convive en su residencia con:</Text>
             <Checkbox.Group 
               options={opcionesConvivencia} 
               value={conviveCon} 
               onChange={(checkedValues) => setConviveCon(checkedValues as string[])} 
             />
           </Col>
-          <Col span={24} md={8}>
+          <Col span={24} md={7}>
+            <Text className="block mb-2 text-sm font-medium">Lugar entre hermanos:</Text>
+            <Select 
+              className="w-full"
+              placeholder="Seleccionar lugar" 
+              allowClear
+              value={lugarHermanos || null}
+              onChange={(val) => setLugarHermanos(val || '')}
+              options={opcionesLugarHermanos} 
+            />
+          </Col>
+          <Col span={24} md={7}>
             <Text className="block mb-2 text-sm font-medium">Califica a tu familia:</Text>
             <Select 
               className="w-full"

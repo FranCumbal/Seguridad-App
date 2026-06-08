@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+import { useEffect, useMemo } from 'react';
 import { Form, Input, Switch, Button, Row, Col, App, Select, Typography, Divider, Slider } from 'antd';
 import { SaveOutlined, CheckCircleOutlined } from '@ant-design/icons';
 import { useForm, Controller } from 'react-hook-form';
@@ -10,6 +10,7 @@ const lbl = (t: string) => <span style={{ color: '#8b949e', fontSize: 12 }}>{t}<
 interface Props { 
   entrevistaId: number; 
   data: any; 
+  entrevistaData?: any; // Añadimos esta propiedad para recibir toda la entrevista
   onSaved: () => void; 
 }
 
@@ -31,9 +32,21 @@ interface ValidacionesFormValues {
   observaciones_finales: string;
 }
 
-export default function ValidacionesTab({ entrevistaId, data, onSaved }: Props) {
+export default function ValidacionesTab({ entrevistaId, data, entrevistaData, onSaved }: Props) {
   const { message } = App.useApp();
   
+  // Generamos de forma dinámica los entrevistadores asignados a esta entrevista
+  const opcionesEntrevistadores = useMemo(() => {
+    const listaIntermedia = entrevistaData?.entrevistadores || [];
+    return listaIntermedia.map((e: any) => {
+      const nombreCompleto = e.entrevistador?.nombre_completo || 'Evaluador sin nombre';
+      return {
+        label: nombreCompleto,
+        value: nombreCompleto // Guardamos el texto plano en la base de datos
+      };
+    });
+  }, [entrevistaData]);
+
   // 2. AÑADIMOS LOS CAMPOS FALTANTES EN DEFAULT VALUES
   const { control, handleSubmit, reset, watch, formState: { isSubmitting } } = useForm<ValidacionesFormValues>({
     defaultValues: { 
@@ -109,10 +122,12 @@ export default function ValidacionesTab({ entrevistaId, data, onSaved }: Props) 
           name="aprobado_por"
           control={control}
           render={({ field }) => (
-            <Input
+            <Select
               {...field}
-              placeholder="Nombre del supervisor que aprueba"
-              style={{ background: '#ffffff', borderColor: '#d0d7de', color: '#24292f' }}
+              placeholder="Seleccione el entrevistador asignado"
+              allowClear
+              options={opcionesEntrevistadores}
+              style={{ width: '100%' }}
             />
           )}
         />

@@ -376,7 +376,8 @@ export const generarInformePDF = async (entrevista: any): Promise<void> => {
   // ── 2. ENTORNO FAMILIAR ─────────────────────────────────────
   content.push(secHeader('2', 'Entorno Familiar'));
   content.push(fichaRow(
-    ['Convive con',             v(entrevista.conviveCon?.replace(/,/g, ', '))],
+    ['Convive con',            v(entrevista.conviveCon?.replace(/,/g, ', '))],
+    ['Lugar entre hermanos',   v(entrevista.lugar_hermanos)],
     ['Calificación familiar',  v(entrevista.calificacionFamilia)],
   ));
 
@@ -685,27 +686,62 @@ export const generarInformePDF = async (entrevista: any): Promise<void> => {
     }],
     margin: [0, 20, 0, 24],
   });
-  content.push({
-    columns: [
-      {
-        width: '45%',
-        stack: [
-          { canvas: [{ type: 'line', x1: 0, y1: 0, x2: 210, y2: 0, lineWidth: 0.5, lineColor: '#374151' }] },
-          { text: 'Evaluador / Analista de Seguridad', fontSize: 8, color: '#6b7280', alignment: 'center', margin: [0, 4, 0, 2] },
-          { text: 'Firma y Sello', fontSize: 7, color: '#9ca3af', alignment: 'center' },
-        ],
-      },
-      { width: '10%', text: '' },
-      {
-        width: '45%',
-        stack: [
-          { canvas: [{ type: 'line', x1: 0, y1: 0, x2: 210, y2: 0, lineWidth: 0.5, lineColor: '#374151' }] },
-          { text: 'Candidato / Postulante', fontSize: 8, color: '#6b7280', alignment: 'center', margin: [0, 4, 0, 2] },
-          { text: 'Firma y/o Huella Dactilar', fontSize: 7, color: '#9ca3af', alignment: 'center' },
-        ],
-      },
-    ],
-  });
+
+  if (entrevistadores && entrevistadores.length > 0) {
+    // Agrupamos los entrevistadores de 2 en 2 para mantener la estética de columnas
+    const chunks = [];
+    for (let i = 0; i < entrevistadores.length; i += 2) {
+      chunks.push(entrevistadores.slice(i, i + 2));
+    }
+
+    chunks.forEach((chunk) => {
+      // Mapeamos los entrevistadores del grupo actual a la estructura de columna de firma
+      const firmasColumna = chunk.map((e: any) => {
+        const nombre = e.entrevistador?.nombre_completo || 'Firma de Evaluador';
+        const cargo = e.entrevistador?.cargo || 'Analista de Seguridad';
+
+        return {
+          width: '45%',
+          stack: [
+            { canvas: [{ type: 'line', x1: 0, y1: 0, x2: 210, y2: 0, lineWidth: 0.5, lineColor: '#374151' }] },
+            { text: nombre, fontSize: 8, bold: true, color: '#374151', alignment: 'center', margin: [0, 4, 0, 2] },
+            { text: cargo, fontSize: 8, color: '#6b7280', alignment: 'center', margin: [0, 0, 0, 2] },
+            { text: 'Firma y Sello', fontSize: 7, color: '#9ca3af', alignment: 'center' },
+          ],
+        };
+      });
+
+      // Aseguramos la separación del 10% en el medio del documento para cuadrar visualmente
+      const rowColumns: any[] = [];
+      if (firmasColumna.length === 2) {
+        rowColumns.push(firmasColumna[0], { width: '10%', text: '' }, firmasColumna[1]);
+      } else {
+        // Si hay un número impar (ej: 1 o 3), el sobrante queda a la izquierda
+        rowColumns.push(firmasColumna[0], { width: '10%', text: '' }, { width: '45%', text: '' });
+      }
+
+      content.push({
+        columns: rowColumns,
+        margin: [0, 0, 0, 30], // Margen inferior en caso de existir más de 2 entrevistadores (múltiples filas)
+      });
+    });
+  } else {
+    // Fallback de seguridad en caso de que una entrevista no tenga entrevistador asignado
+    content.push({
+      columns: [
+        {
+          width: '45%',
+          stack: [
+            { canvas: [{ type: 'line', x1: 0, y1: 0, x2: 210, y2: 0, lineWidth: 0.5, lineColor: '#374151' }] },
+            { text: 'Evaluador / Analista de Seguridad', fontSize: 8, color: '#6b7280', alignment: 'center', margin: [0, 4, 0, 2] },
+            { text: 'Firma y Sello', fontSize: 7, color: '#9ca3af', alignment: 'center' },
+          ],
+        },
+        { width: '10%', text: '' },
+        { width: '45%', text: '' },
+      ],
+    });
+  }
 
   // ─────────────────────────────────────────────────────────────
   // DEFINICIÓN FINAL DEL DOCUMENTO

@@ -95,7 +95,7 @@ export default function DetalleEntrevistaPage() {
     { key: 'drogas_alcohol',    label: '🔬 Drogas / Alcohol',  children: <DrogasAlcoholTab   entrevistaId={Number(id)} data={entrevista.drogas_alcohol}   onSaved={loadEntrevista} /> },
     { key: 'judicial',          label: '⚖️ Judicial',          children: <JudicialTab        entrevistaId={Number(id)} data={entrevista.judicial}         onSaved={loadEntrevista} /> },
     { key: 'infiltracion',      label: '🔍 Infiltración',      children: <InfiltracionTab    entrevistaId={Number(id)} data={entrevista.infiltracion}     onSaved={loadEntrevista} /> },
-    { key: 'validaciones',      label: '✅ Validaciones',      children: <ValidacionesTab    entrevistaId={Number(id)} data={entrevista.validaciones}     onSaved={loadEntrevista} /> },
+    { key: 'validaciones',      label: '✅ Validaciones',      children: <ValidacionesTab    entrevistaId={Number(id)} data={entrevista.validaciones} entrevistaData={entrevista} onSaved={loadEntrevista} /> },
   ];
 
   return (
