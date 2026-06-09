@@ -122,3 +122,11 @@ export const usuariosApi = {
   delete: (id: number) =>
     apiClient.delete(`/usuarios/${id}`),
 };
+
+// =============================================
+// CONFIGURACIÓN SERVICE
+// =============================================
+export const configuracionApi = {
+  get: () => apiClient.get('/configuracion'),
+  update: (data: any) => apiClient.put('/configuracion', data),
+};

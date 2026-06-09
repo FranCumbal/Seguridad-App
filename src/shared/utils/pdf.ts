@@ -1,6 +1,8 @@
 import pdfMake from 'pdfmake/build/pdfmake';
 import pdfFonts from 'pdfmake/build/vfs_fonts';
 import dayjs from 'dayjs';
+// 1. IMPORTAMOS EL SERVICIO DE CONFIGURACIÓN GLOBAL
+import { configuracionApi } from '../../infrastructure/api/services';
 
 (pdfMake as any).vfs =
   (pdfFonts as any).pdfMake?.vfs ?? (pdfFonts as any).vfs;
@@ -81,9 +83,9 @@ const fichaRow = (...fields: Array<[string, string]>): any => {
 };
 
 // ─────────────────────────────────────────────────────────────
-// ENCABEZADO DE SECCIÓN
+// ENCABEZADO DE SECCIÓN (AHORA RECIBE colorPrimario DINÁMICO)
 // ─────────────────────────────────────────────────────────────
-const secHeader = (num: string, title: string, mb: number = 6): any => ({
+const secHeader = (num: string, title: string, colorPrimario: string, mb: number = 6): any => ({
   table: {
     widths: ['*'],
     body: [[{
@@ -91,7 +93,7 @@ const secHeader = (num: string, title: string, mb: number = 6): any => ({
       fontSize:  9,
       bold:      true,
       color:      '#ffffff',
-      fillColor: '#1e3a5f',
+      fillColor: colorPrimario, // <-- COLOR DINÁMICO
       margin:    [8, 5, 8, 5],
     }]]
   },
@@ -190,6 +192,19 @@ const subTitle = (text: string): any => ({
 export const generarInformePDF = async (entrevista: any): Promise<void> => {
   if (!entrevista) return;
 
+  // 2. OBTENER CONFIGURACIÓN DESDE LA BASE DE DATOS
+  let config: any = {};
+  try {
+    const { data } = await configuracionApi.get();
+    if (data) config = data;
+  } catch (error) {
+    console.error('Error al obtener configuración para PDF:', error);
+  }
+
+  // 3. ESTABLECER VARIABLES DINÁMICAS (Con fallback al azul original)
+  const colorPrimario = config.color_corporativo || '#1e3a5f';
+  const textoFooter = config.texto_footer || 'SEGURIDAD GRUPO EMPRESARIAL ROJAS';
+
   const dp   = entrevista.datos_personales || {};
   const fam  = entrevista.familia          || [];
   const est  = entrevista.estudios         || [];
@@ -205,11 +220,6 @@ export const generarInformePDF = async (entrevista: any): Promise<void> => {
   const candidatoFoto = dp.fotografia
     ? await fetchBase64(`${API_URL}${dp.fotografia}`)
     : null;
-
-  // Cargar logos de la empresa desde la carpeta public
-  const baseUrl = import.meta.env.BASE_URL || '/';
-  const logoIzquierdo = await fetchBase64(`${window.location.origin}${baseUrl}logo-izq.png`);
-  const logoDerecho = await fetchBase64(`${window.location.origin}${baseUrl}logo-der.png`);
 
   // Mapeo asíncrono en paralelo para obtener las fotos y descripciones de los tatuajes
   const tatuajesArr = inf.tatuajes || [];
@@ -227,7 +237,7 @@ export const generarInformePDF = async (entrevista: any): Promise<void> => {
     text:      'INFORME INTEGRAL DE EVALUACIÓN DE SEGURIDAD',
     fontSize:  13,
     bold:      true,
-    color:      '#1e3a5f',
+    color:      colorPrimario, // <-- COLOR DINÁMICO
     alignment: 'center',
     margin:    [0, 0, 0, 4],
   });
@@ -254,15 +264,13 @@ export const generarInformePDF = async (entrevista: any): Promise<void> => {
   content.push({
     canvas: [{
       type: 'line', x1: 0, y1: 0, x2: 515, y2: 0,
-      lineWidth: 1.5, lineColor: '#1e3a5f',
+      lineWidth: 1.5, lineColor: colorPrimario, // <-- COLOR DINÁMICO
     }],
     margin: [0, 0, 0, 12],
   });
 
   // ── 1. DATOS PERSONALES ─────────────────────────────────────
-  // Extraemos el header del sistema de columnas para que ocupe el 100% del ancho
-  // y aplicamos un margen inferior de 6 para separar la foto y los datos.
-  content.push(secHeader('1', 'Datos Personales', 6));
+  content.push(secHeader('1', 'Datos Personales', colorPrimario, 6)); // <-- COLOR DINÁMICO
 
   if (candidatoFoto) {
     const datosSuperiores = [
@@ -304,7 +312,7 @@ export const generarInformePDF = async (entrevista: any): Promise<void> => {
       columns: [
         {
           width: 75,
-          margin: [0, 0, 15, 0], // Margen derecho de 15 para separar la foto de la tabla de datos
+          margin: [0, 0, 15, 0],
           table: {
             widths: [75],
             body: [[
@@ -319,8 +327,8 @@ export const generarInformePDF = async (entrevista: any): Promise<void> => {
           layout: {
             hLineWidth: () => 0.5,
             vLineWidth: () => 0.5,
-            hLineColor: () => '#1e3a5f',
-            vLineColor: () => '#1e3a5f',
+            hLineColor: () => colorPrimario, // <-- COLOR DINÁMICO
+            vLineColor: () => colorPrimario, // <-- COLOR DINÁMICO
             paddingLeft: () => 0,
             paddingRight: () => 0,
             paddingTop: () => 0,
@@ -374,14 +382,13 @@ export const generarInformePDF = async (entrevista: any): Promise<void> => {
   }
 
   // ── 2. ENTORNO FAMILIAR ─────────────────────────────────────
-  content.push(secHeader('2', 'Entorno Familiar'));
+  content.push(secHeader('2', 'Entorno Familiar', colorPrimario));
   content.push(fichaRow(
     ['Convive con',            v(entrevista.conviveCon?.replace(/,/g, ', '))],
     ['Lugar entre hermanos',   v(entrevista.lugar_hermanos)],
     ['Calificación familiar',  v(entrevista.calificacionFamilia)],
   ));
 
-  // Filtramos familiares que no aporten datos de valor
   const famFiltrada = fam.filter((f: any) => {
     const tieneNombre    = f.nombres && String(f.nombres).trim() !== '';
     const tieneEdad      = f.edad !== null && f.edad !== undefined && String(f.edad).trim() !== '';
@@ -403,8 +410,9 @@ export const generarInformePDF = async (entrevista: any): Promise<void> => {
   } else {
     content.push({ text: 'No se registraron familiares con información detallada.', fontSize: 8, color: '#94a3b8', margin: [0, 0, 0, 8] });
   }
+
   // ── 3. FORMACIÓN ACADÉMICA ──────────────────────────────────
-  content.push(secHeader('3', 'Formación Académica'));
+  content.push(secHeader('3', 'Formación Académica', colorPrimario));
   if (est.length > 0) {
     content.push(dataTable(
       ['Nivel', 'Institución', 'Título Obtenido', 'Ciudad', 'Estado', 'Verif.'],
@@ -419,7 +427,7 @@ export const generarInformePDF = async (entrevista: any): Promise<void> => {
   }
 
   // ── 4. SITUACIÓN FINANCIERA ─────────────────────────────────
-  content.push(secHeader('4', 'Situación Financiera'));
+  content.push(secHeader('4', 'Situación Financiera', colorPrimario));
   content.push(fichaRow(
     ['Ingresos Mensuales', fmtMoneda(fin.ingresos_mensuales)],
     ['Egresos Mensuales',  fmtMoneda(fin.egresos_mensuales)],
@@ -466,7 +474,7 @@ export const generarInformePDF = async (entrevista: any): Promise<void> => {
   }
 
   // ── 5. HISTORIAL LABORAL ────────────────────────────────────
-  content.push(secHeader('5', 'Historial Laboral'));
+  content.push(secHeader('5', 'Historial Laboral', colorPrimario));
   content.push(fichaRow(
     ['Medio por el que conoció la vacante',         v(lab.medio_vacante)],
     ['¿Cometió actos ilícitos en emp. anteriores?', fmtBool(lab.acto_ilicito)],
@@ -496,7 +504,7 @@ export const generarInformePDF = async (entrevista: any): Promise<void> => {
   }
 
   // ── 6. DROGAS Y ALCOHOL ─────────────────────────────────────
-  content.push(secHeader('6', 'Drogas y Alcohol'));
+  content.push(secHeader('6', 'Drogas y Alcohol', colorPrimario));
 
   content.push(subTitle('Consumo de Bebidas Alcohólicas'));
   content.push(fichaRow(['¿Consume bebidas alcohólicas?', fmtBool(drog.consume_alcohol)]));
@@ -529,7 +537,7 @@ export const generarInformePDF = async (entrevista: any): Promise<void> => {
   }
 
   // ── 7. ANTECEDENTES JUDICIALES ──────────────────────────────
-  content.push(secHeader('7', 'Antecedentes Judiciales'));
+  content.push(secHeader('7', 'Antecedentes Judiciales', colorPrimario));
   content.push(fichaRow(
     ['¿Ha interpuesto demandas?', fmtBool(jud.interpuesto_demandas)],
     ['¿Ha sido demandado?',       fmtBool(jud.sido_demandado)],
@@ -567,7 +575,7 @@ export const generarInformePDF = async (entrevista: any): Promise<void> => {
   }
 
   // ── 8. CONTROL DE INFILTRACIÓN ──────────────────────────────
-  content.push(secHeader('8', 'Control de Infiltración'));
+  content.push(secHeader('8', 'Control de Infiltración', colorPrimario));
   if (inf.motivacion_ingreso) {
     content.push(textBox(`Motivación para ingresar a la empresa: ${inf.motivacion_ingreso}`));
   }
@@ -603,8 +611,8 @@ export const generarInformePDF = async (entrevista: any): Promise<void> => {
             },
             layout: {
               hLineWidth: () => 0.5, vLineWidth: () => 0.5,
-              // Usamos el color azul corporativo puro para la cuadrícula
-              hLineColor: () => '#1e3a5f', vLineColor: () => '#1e3a5f',
+              // Color dinámico aplicado a los bordes de la foto del tatuaje
+              hLineColor: () => colorPrimario, vLineColor: () => colorPrimario,
               paddingLeft: () => 0, paddingRight: () => 0, paddingTop: () => 0, paddingBottom: () => 0
             }
           },
@@ -642,7 +650,7 @@ export const generarInformePDF = async (entrevista: any): Promise<void> => {
   }
 
   // ── 9. VALIDACIONES Y RESULTADO FINAL ───────────────────────
-  content.push(secHeader('9', 'Validaciones y Resultado Final'));
+  content.push(secHeader('9', 'Validaciones y Resultado Final', colorPrimario));
   content.push(fichaRow(
     ['Documentos verificados',  fmtBool(val_.documentos_verificados)],
     ['Referencias verificadas', fmtBool(val_.referencias_verificadas)],
@@ -759,30 +767,30 @@ export const generarInformePDF = async (entrevista: any): Promise<void> => {
     pageSize:    'A4',
     pageMargins: [40, 110, 40, 50], // Incremento sustancial del margen superior para evitar colisiones
 
-    // Encabezado con logos de escala máxima
+    // Encabezado usando configuración dinámica desde BD
     header: () => {
       return {
         margin: [40, 15, 40, 0],
         columns: [
-          logoIzquierdo 
-            ? { image: logoIzquierdo, fit: [200, 85], alignment: 'left', opacity: 0.35 } 
+          (config.logo_izq_visible && config.logo_izq_url)
+            ? { image: config.logo_izq_url, fit: [200, 85], alignment: 'left', opacity: config.logo_izq_opacidad ?? 0.35 } 
             : { text: '', width: 200 },
           { text: '', width: '*' }, 
-          logoDerecho 
-            ? { image: logoDerecho, fit: [200, 85], alignment: 'right', opacity: 0.35 } 
+          (config.logo_der_visible && config.logo_der_url)
+            ? { image: config.logo_der_url, fit: [200, 85], alignment: 'right', opacity: config.logo_der_opacidad ?? 0.35 } 
             : { text: '', width: 200 },
         ]
       };
     },
 
-    // Footer elegante con línea azul y símbolo corporativo
+    // Footer elegante con color y texto dinámico
     footer: (currentPage: number, pageCount: number): any => ({
       margin: [40, 6, 40, 0],
       stack: [
         {
           canvas: [{
             type: 'line', x1: 0, y1: 0, x2: 515, y2: 0,
-            lineWidth: 1.5, lineColor: '#1e3a5f',
+            lineWidth: 1.5, lineColor: colorPrimario, // <-- COLOR DINÁMICO
           }],
           margin: [0, 0, 0, 5],
         },
@@ -791,12 +799,12 @@ export const generarInformePDF = async (entrevista: any): Promise<void> => {
             {
               width: '*',
               text: [
-                { text: '◆  ', fontSize: 9, color: '#1e3a5f' },
+                { text: '◆  ', fontSize: 9, color: colorPrimario }, // <-- COLOR DINÁMICO
                 {
-                  text: 'SEGURIDAD GRUPO EMPRESARIAL ROJAS',
+                  text: textoFooter, // <-- TEXTO DINÁMICO
                   fontSize: 8,
                   bold: true,
-                  color: '#1e3a5f',
+                  color: colorPrimario, // <-- COLOR DINÁMICO
                   characterSpacing: 0.5,
                 },
               ],
@@ -804,7 +812,7 @@ export const generarInformePDF = async (entrevista: any): Promise<void> => {
             {
               width: 'auto',
               text: [
-                { text: String(currentPage), fontSize: 10, bold: true, color: '#1e3a5f' },
+                { text: String(currentPage), fontSize: 10, bold: true, color: colorPrimario }, // <-- COLOR DINÁMICO
                 { text: `  /  ${pageCount}`, fontSize: 8, color: '#94a3b8' },
               ],
               alignment: 'right',

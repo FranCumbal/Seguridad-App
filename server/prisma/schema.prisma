@@ -377,10 +377,10 @@ model Auditoria {
 
 model Configuracion {
   id                 Int      @id @default(1)
-  logo_izq_url       String?
+  logo_izq_url       String?  @db.Text  
   logo_izq_opacidad  Float    @default(0.35)
   logo_izq_visible   Boolean  @default(true)
-  logo_der_url       String?
+  logo_der_url       String?  @db.Text   
   logo_der_opacidad  Float    @default(0.35)
   logo_der_visible   Boolean  @default(true)
   color_corporativo  String   @default("#1e3a5f")

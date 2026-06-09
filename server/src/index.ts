@@ -8,6 +8,7 @@ import { entrevistasRouter } from './routes/entrevistas';
 import { entrevistadoresRouter } from './routes/entrevistadores';
 import { usuariosRouter } from './routes/usuarios';
 import { estadisticasRouter } from './routes/estadisticas';
+import configuracionRouter from './routes/configuracion';
 
 dotenv.config();
 
@@ -37,6 +38,7 @@ app.use('/api/entrevistas',     entrevistasRouter);
 app.use('/api/entrevistadores', entrevistadoresRouter);
 app.use('/api/usuarios',        usuariosRouter);
 app.use('/api/estadisticas',    estadisticasRouter);
+app.use('/api/configuracion',   configuracionRouter); // <-- LÍNEA AGREGADA
 
 // =============================================
 // HEALTH CHECK
