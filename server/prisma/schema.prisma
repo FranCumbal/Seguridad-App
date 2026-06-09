@@ -374,3 +374,16 @@ model Auditoria {
   usuario    Usuario  @relation(fields: [usuarioId], references: [id])
   @@map("auditoria")
 }
+
+model Configuracion {
+  id                 Int      @id @default(1)
+  logo_izq_url       String?
+  logo_izq_opacidad  Float    @default(0.35)
+  logo_izq_visible   Boolean  @default(true)
+  logo_der_url       String?
+  logo_der_opacidad  Float    @default(0.35)
+  logo_der_visible   Boolean  @default(true)
+  color_corporativo  String   @default("#1e3a5f")
+  texto_footer       String   @default("SEGURIDAD GRUPO EMPRESARIAL ROJAS")
+  updatedAt          DateTime @updatedAt
+}

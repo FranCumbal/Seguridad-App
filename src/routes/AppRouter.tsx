@@ -7,6 +7,7 @@ import EntrevistasPage from '@/modules/entrevistas/pages/EntrevistasPage';
 import NuevaEntrevistaPage from '@/modules/entrevistas/pages/NuevaEntrevistaPage';
 import DetalleEntrevistaPage from '@/modules/entrevistas/pages/DetalleEntrevistaPage';
 import EntrevistadoresPage from '@/modules/entrevistadores/pages/EntrevistadoresPage';
+import ConfiguracionPage from '@/modules/configuracion/pages/ConfiguracionPage';
 
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
   const isAuthenticated = useAuthStore((s) => s.isAuthenticated);
@@ -32,6 +33,7 @@ export default function AppRouter() {
         <Route path="entrevistas/nueva" element={<NuevaEntrevistaPage />} />
         <Route path="entrevistas/:id" element={<DetalleEntrevistaPage />} />
         <Route path="entrevistadores" element={<EntrevistadoresPage />} />
+        <Route path="/configuracion" element={<ConfiguracionPage />} />
       </Route>
 
       <Route path="*" element={<Navigate to="/dashboard" replace />} />

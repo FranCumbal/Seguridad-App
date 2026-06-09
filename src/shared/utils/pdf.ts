@@ -381,19 +381,28 @@ export const generarInformePDF = async (entrevista: any): Promise<void> => {
     ['Calificación familiar',  v(entrevista.calificacionFamilia)],
   ));
 
-  if (fam.length > 0) {
+  // Filtramos familiares que no aporten datos de valor
+  const famFiltrada = fam.filter((f: any) => {
+    const tieneNombre    = f.nombres && String(f.nombres).trim() !== '';
+    const tieneEdad      = f.edad !== null && f.edad !== undefined && String(f.edad).trim() !== '';
+    const tieneOcupacion = f.ocupacion && String(f.ocupacion).trim() !== '';
+    const tieneCelular   = f.celular && String(f.celular).trim() !== '';
+
+    return tieneNombre || tieneEdad || tieneOcupacion || tieneCelular;
+  });
+
+  if (famFiltrada.length > 0) {
     content.push(dataTable(
       ['Parentesco', 'Nombre Completo', 'Edad', 'Ocupación', 'Celular'],
-      fam.map((f: any) => [
+      famFiltrada.map((f: any) => [
         v(f.tipo_parentesco), v(f.nombres), f.edad ?? '—',
         v(f.ocupacion), v(f.celular),
       ]),
       ['16%', '29%', '10%', '27%', '18%'],
     ));
   } else {
-    content.push({ text: 'No se registraron familiares.', fontSize: 8, color: '#94a3b8', margin: [0, 0, 0, 8] });
+    content.push({ text: 'No se registraron familiares con información detallada.', fontSize: 8, color: '#94a3b8', margin: [0, 0, 0, 8] });
   }
-
   // ── 3. FORMACIÓN ACADÉMICA ──────────────────────────────────
   content.push(secHeader('3', 'Formación Académica'));
   if (est.length > 0) {
@@ -813,5 +822,18 @@ export const generarInformePDF = async (entrevista: any): Promise<void> => {
   // GENERAR Y DESCARGAR DIRECTAMENTE CON PDFMAKE
   // ─────────────────────────────────────────────────────────────
   const pdfDoc = (pdfMake as any).createPdf(docDefinition);
-  pdfDoc.download(`INFORME_${v(dp.cedula, 'CANDIDATO')}.pdf`);
+  
+  // Construcción segura del nombre del archivo
+  let identificadorArchivo = 'CANDIDATO';
+  if (dp.nombres && dp.apellidos) {
+    // Une nombres y apellidos, quita espacios en blanco extra, y los reemplaza por guiones bajos
+    identificadorArchivo = `${dp.nombres}_${dp.apellidos}`
+      .trim()
+      .replace(/\s+/g, '_')
+      .toUpperCase();
+  } else if (dp.cedula) {
+    identificadorArchivo = dp.cedula;
+  }
+
+  pdfDoc.download(`INFORME_${identificadorArchivo}.pdf`);
 };
