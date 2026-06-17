@@ -3,21 +3,21 @@ generator client {
 }
 
 datasource db {
-  provider = "sqlserver"
+  provider = "sqlite"
   url      = env("DATABASE_URL")
 }
 
 model Usuario {
-  id            Int      @id @default(autoincrement())
-  username      String   @unique @db.VarChar(100)
-  email         String   @unique @db.VarChar(255)
-  password_hash String   @db.VarChar(255)
-  nombre        String   @db.VarChar(150)
-  apellido      String   @db.VarChar(150)
-  rol           String   @default("ENTREVISTADOR") @db.VarChar(50)
-  activo        Boolean  @default(true)
-  createdAt     DateTime @default(now())
-  updatedAt     DateTime @updatedAt
+  id            Int          @id @default(autoincrement())
+  username      String       @unique
+  email         String       @unique
+  password_hash String
+  nombre        String
+  apellido      String
+  rol           String       @default("ENTREVISTADOR")
+  activo        Boolean      @default(true)
+  createdAt     DateTime     @default(now())
+  updatedAt     DateTime     @updatedAt
   
   // Relaciones
   sesiones      Sesion[]
@@ -30,7 +30,7 @@ model Usuario {
 model Sesion {
   id        Int      @id @default(autoincrement())
   usuarioId Int
-  token     String   @unique @db.VarChar(500)
+  token     String   @unique
   expiresAt DateTime
   createdAt DateTime @default(now())
   usuario   Usuario  @relation(fields: [usuarioId], references: [id])
@@ -38,29 +38,29 @@ model Sesion {
 }
 
 model Entrevistador {
-  id                    Int      @id @default(autoincrement())
-  nombre_completo       String   @db.VarChar(200)
-  cargo                 String   @db.VarChar(150)
-  fotografia            String?  @db.VarChar(500)
-  activo                Boolean  @default(true)
-  createdAt             DateTime @default(now())
-  updatedAt             DateTime @updatedAt
+  id                    Int                       @id @default(autoincrement())
+  nombre_completo       String
+  cargo                 String
+  fotografia            String?
+  activo                Boolean                   @default(true)
+  createdAt             DateTime                  @default(now())
+  updatedAt             DateTime                  @updatedAt
   entrevistas_asignadas EntrevistaEntrevistador[]
   @@map("entrevistadores")
 }
 
 model Entrevista {
   id                      Int      @id @default(autoincrement())
-  codigo                  String   @unique @db.VarChar(50)
+  codigo                  String   @unique
   usuarioId               Int?     
-  estado                  String   @default("EN_PROCESO") @db.VarChar(50)
-  observaciones_iniciales String?  @db.Text
+  estado                  String   @default("EN_PROCESO")
+  observaciones_iniciales String?  
   fecha_entrevista        DateTime @default(now())
   
   // --- NUEVOS CAMPOS DEL MÓDULO FAMILIA ---
-  conviveCon              String?  @db.VarChar(500) // Guardará el arreglo convertido a texto ej: "Padres,Hermanos"
-  calificacionFamilia     String?  @db.VarChar(100) // Guardará "Unida", "Estable", etc.
-  lugar_hermanos           String?
+  conviveCon              String?  
+  calificacionFamilia     String?  
+  lugar_hermanos          String?
   // ----------------------------------------
 
   createdAt               DateTime @default(now())
@@ -96,26 +96,26 @@ model EntrevistaEntrevistador {
 model DatosPersonales {
   id                Int        @id @default(autoincrement())
   entrevistaId      Int        @unique
-  cedula            String     @db.VarChar(15)
-  libreta_militar   String?    @db.VarChar(50)
-  nombres           String     @db.VarChar(150)
-  apellidos         String     @db.VarChar(150)
+  cedula            String     
+  libreta_militar   String?    
+  nombres           String     
+  apellidos         String     
   fecha_nacimiento  DateTime
   edad              Int?
-  estado_civil      String     @db.VarChar(50)
-  genero            String     @db.VarChar(50)
-  lugar_nacimiento  String?    @db.VarChar(200)
-  provincia         String?    @db.VarChar(100)
-  ciudad            String?    @db.VarChar(100)
-  barrio_parroquia  String?    @db.VarChar(150)
-  direccion         String?    @db.Text
-  estado_salud      String?    @db.VarChar(50)
-  telefono_fijo     String?    @db.VarChar(20)
-  celular           String     @db.VarChar(20)
-  correo            String?    @db.VarChar(255) 
-  area_trabajo      String?    @db.VarChar(100)
-  cargo_postula     String?    @db.VarChar(200)
-  fotografia        String?    @db.VarChar(500)
+  estado_civil      String     
+  genero            String     
+  lugar_nacimiento  String?    
+  provincia         String?    
+  ciudad            String?    
+  barrio_parroquia  String?    
+  direccion         String?    
+  estado_salud      String?    
+  telefono_fijo     String?    
+  celular           String     
+  correo            String?    
+  area_trabajo      String?    
+  cargo_postula     String?    
+  fotografia        String?    
 
   entrevista        Entrevista @relation(fields: [entrevistaId], references: [id], onDelete: Cascade)
 
@@ -125,13 +125,13 @@ model DatosPersonales {
 model Familia {
   id              Int        @id @default(autoincrement())
   entrevistaId    Int
-  tipo_parentesco String     @db.VarChar(100)
-  nombres         String?    @db.VarChar(200) // <-- CAMBIADO A OPCIONAL (?)
+  tipo_parentesco String     
+  nombres         String?    
   edad            Int?
-  ocupacion       String?    @db.VarChar(200)
-  lugar_trabajo   String?    @db.VarChar(200)
-  celular         String?    @db.VarChar(20)
-  observaciones   String?    @db.Text
+  ocupacion       String?    
+  lugar_trabajo   String?    
+  celular         String?    
+  observaciones   String?    
   entrevista      Entrevista @relation(fields: [entrevistaId], references: [id], onDelete: Cascade)
   @@map("familia")
 }
@@ -139,200 +139,200 @@ model Familia {
 model Estudio {
   id              Int        @id @default(autoincrement())
   entrevistaId    Int
-  nivel           String     @db.VarChar(100)
-  institucion     String     @db.VarChar(200)
-  titulo_obtenido String?    @db.VarChar(200)
-  estado          String?    @db.VarChar(50)
-  ciudad          String?    @db.VarChar(100)
+  nivel           String     
+  institucion     String     
+  titulo_obtenido String?    
+  estado          String?    
+  ciudad          String?    
   verificado      Boolean    @default(false)
-  observaciones   String?    @db.Text
+  observaciones   String?    
   entrevista      Entrevista @relation(fields: [entrevistaId], references: [id], onDelete: Cascade)
 
   @@map("estudios")
 }
 
 model Finanzas {
-  id                         Int        @id @default(autoincrement())
-  entrevistaId               Int        @unique
-  ingresos_mensuales         Decimal?   @db.Decimal(10, 2)
-  egresos_mensuales          Decimal?   @db.Decimal(10, 2)
-  tiene_bienes_inmuebles     Boolean    @default(false)
-  tiene_vehiculos            Boolean    @default(false)
-  tiene_creditos             Boolean    @default(false)
-  tiene_deudas_personales    Boolean    @default(false)
-  tiene_reportes_negativos   Boolean    @default(false)
-  observaciones              String?    @db.Text
-  entrevista                 Entrevista @relation(fields: [entrevistaId], references: [id], onDelete: Cascade)
+  id                       Int        @id @default(autoincrement())
+  entrevistaId             Int        @unique
+  ingresos_mensuales       Decimal?   
+  egresos_mensuales        Decimal?   
+  tiene_bienes_inmuebles   Boolean    @default(false)
+  tiene_vehiculos          Boolean    @default(false)
+  tiene_creditos           Boolean    @default(false)
+  tiene_deudas_personales  Boolean    @default(false)
+  tiene_reportes_negativos Boolean    @default(false)
+  observaciones            String?    
+  entrevista               Entrevista @relation(fields: [entrevistaId], references: [id], onDelete: Cascade)
 
   // Relaciones 1-a-Muchos
-  bienes_inmuebles           BienInmueble[]
-  vehiculos                  Vehiculo[]
-  creditos                   Credito[]
-  deudas_personales          DeudaPersonal[]
-  reportes_negativos         ReporteNegativo[]
+  bienes_inmuebles         BienInmueble[]
+  vehiculos                Vehiculo[]
+  creditos                 Credito[]
+  deudas_personales        DeudaPersonal[]
+  reportes_negativos       ReporteNegativo[]
 
   @@map("finanzas")
 }
 
 model BienInmueble {
-  id          Int      @id @default(autoincrement())
-  finanzasId  Int
-  tipo        String   @db.VarChar(100)
-  valor       Decimal  @db.Decimal(10, 2)
-  finanzas    Finanzas @relation(fields: [finanzasId], references: [id], onDelete: Cascade)
+  id         Int      @id @default(autoincrement())
+  finanzasId Int
+  tipo       String   
+  valor      Decimal  
+  finanzas   Finanzas @relation(fields: [finanzasId], references: [id], onDelete: Cascade)
   @@map("finanzas_bienes")
 }
 
 model Vehiculo {
-  id          Int      @id @default(autoincrement())
-  finanzasId  Int
-  tipo        String   @db.VarChar(50)
-  placa       String   @db.VarChar(20)
-  modelo      String   @db.VarChar(100)
-  finanzas    Finanzas @relation(fields: [finanzasId], references: [id], onDelete: Cascade)
+  id         Int      @id @default(autoincrement())
+  finanzasId Int
+  tipo       String   
+  placa      String   
+  modelo     String   
+  finanzas   Finanzas @relation(fields: [finanzasId], references: [id], onDelete: Cascade)
   @@map("finanzas_vehiculos")
 }
 
 model Credito {
-  id          Int      @id @default(autoincrement())
-  finanzasId  Int
-  entidad     String   @db.VarChar(200)
-  monto       Decimal  @db.Decimal(10, 2)
-  finanzas    Finanzas @relation(fields: [finanzasId], references: [id], onDelete: Cascade)
+  id         Int      @id @default(autoincrement())
+  finanzasId Int
+  entidad    String   
+  monto      Decimal  
+  finanzas   Finanzas @relation(fields: [finanzasId], references: [id], onDelete: Cascade)
   @@map("finanzas_creditos")
 }
 
 model DeudaPersonal {
-  id          Int      @id @default(autoincrement())
-  finanzasId  Int
-  detalle     String   @db.Text
-  monto       Decimal  @db.Decimal(10, 2)
-  finanzas    Finanzas @relation(fields: [finanzasId], references: [id], onDelete: Cascade)
+  id         Int      @id @default(autoincrement())
+  finanzasId Int
+  detalle    String   
+  monto      Decimal  
+  finanzas   Finanzas @relation(fields: [finanzasId], references: [id], onDelete: Cascade)
   @@map("finanzas_deudas")
 }
 
 model ReporteNegativo {
-  id          Int      @id @default(autoincrement())
-  finanzasId  Int
-  detalle     String   @db.Text
-  monto       Decimal  @db.Decimal(10, 2)
-  finanzas    Finanzas @relation(fields: [finanzasId], references: [id], onDelete: Cascade)
+  id         Int      @id @default(autoincrement())
+  finanzasId Int
+  detalle    String   
+  monto      Decimal  
+  finanzas   Finanzas @relation(fields: [finanzasId], references: [id], onDelete: Cascade)
   @@map("finanzas_reportes")
 }
 
 model HistorialLaboral {
-  id                         Int                  @id @default(autoincrement())
-  entrevistaId               Int                  @unique
-  medio_vacante              String?              @db.VarChar(100)
-  acto_ilicito               Boolean              @default(false)
-  detalle_grave              String?              @db.Text
-  observaciones              String?              @db.Text
-  entrevista                 Entrevista           @relation(fields: [entrevistaId], references: [id], onDelete: Cascade)
-  experiencias               ExperienciaLaboral[]
+  id                 Int                  @id @default(autoincrement())
+  entrevistaId       Int                  @unique
+  medio_vacante      String?              
+  acto_ilicito       Boolean              @default(false)
+  detalle_grave      String?              
+  observaciones      String?              
+  entrevista         Entrevista           @relation(fields: [entrevistaId], references: [id], onDelete: Cascade)
+  experiencias       ExperienciaLaboral[]
 
   @@map("historial_laboral")
 }
 
 model ExperienciaLaboral {
-  id                         Int              @id @default(autoincrement())
-  historialLaboralId         Int
-  empresa                    String           @db.VarChar(200)
-  cargo                      String           @db.VarChar(200)
-  fecha_inicio               DateTime
-  fecha_fin                  DateTime?
-  trabajo_actual             Boolean          @default(false)
-  motivo_salida              String?          @db.Text
-  salario                    Decimal?         @db.Decimal(10, 2)
-  certificado_laboral        Boolean          @default(false)
-  observaciones              String?          @db.Text
-  historial_laboral          HistorialLaboral @relation(fields: [historialLaboralId], references: [id], onDelete: Cascade)
+  id                 Int              @id @default(autoincrement())
+  historialLaboralId Int
+  empresa            String           
+  cargo              String           
+  fecha_inicio       DateTime
+  fecha_fin          DateTime?
+  trabajo_actual     Boolean          @default(false)
+  motivo_salida      String?          
+  salario            Decimal?         
+  certificado_laboral Boolean         @default(false)
+  observaciones      String?          
+  historial_laboral  HistorialLaboral @relation(fields: [historialLaboralId], references: [id], onDelete: Cascade)
 
   @@map("experiencia_laboral")
 }
 
 model DrogasAlcohol {
-  id                         Int        @id @default(autoincrement())
-  entrevistaId               Int        @unique
+  id                       Int        @id @default(autoincrement())
+  entrevistaId             Int        @unique
   
   // Sección: Alcohol
-  consume_alcohol            Boolean    @default(false)
-  ultima_vez_alcohol         String?    @db.VarChar(100) // hoy, ayer, ultima semana, etc.
-  bebida_preferencia         String?    @db.VarChar(100)
-  frecuencia_alcohol         String?    @db.VarChar(100) // ocasional, en fiestas, frecuentemente
-  inconvenientes_alcohol     Boolean    @default(false)  // inconvenientes personales/familiares
-  dependencia_alcohol        Boolean    @default(false)  // dependencias de licor
+  consume_alcohol          Boolean    @default(false)
+  ultima_vez_alcohol       String?    
+  bebida_preferencia       String?    
+  frecuencia_alcohol       String?    
+  inconvenientes_alcohol   Boolean    @default(false)  
+  dependencia_alcohol      Boolean    @default(false)  
   
   // Sección: Drogas Ilegales y Narcotráfico
-  concepto_drogas            String?    @db.Text         // qué entiende por drogas ilegales
-  consume_drogas             Boolean    @default(false)
-  tipo_drogas                String?    @db.Text         // tipo de drogas si consumió
-  involucrado_narcotrafico   Boolean    @default(false)
-  propuestas_narcotrafico    Boolean    @default(false)
-  entorno_drogas             Boolean    @default(false)  // familia o amigos dedicados a esto
+  concepto_drogas          String?    
+  consume_drogas           Boolean    @default(false)
+  tipo_drogas              String?    
+  involucrado_narcotrafico Boolean    @default(false)
+  propuestas_narcotrafico  Boolean    @default(false)
+  entorno_drogas           Boolean    @default(false)  
   
-  observaciones              String?    @db.Text
-  entrevista                 Entrevista @relation(fields: [entrevistaId], references: [id], onDelete: Cascade)
+  observaciones            String?    
+  entrevista               Entrevista @relation(fields: [entrevistaId], references: [id], onDelete: Cascade)
 
   @@map("drogas_alcohol")
 }
 
 model Judicial {
-  id                                 Int        @id @default(autoincrement())
-  entrevistaId                       Int        @unique
+  id                               Int        @id @default(autoincrement())
+  entrevistaId                     Int        @unique
   
-  interpuesto_demandas               Boolean    @default(false)
-  sido_demandado                     Boolean    @default(false)
-  proceso_judicial                   Boolean    @default(false)
+  interpuesto_demandas             Boolean    @default(false)
+  sido_demandado                   Boolean    @default(false)
+  proceso_judicial                 Boolean    @default(false)
   
-  detenciones                        Boolean    @default(false)
-  observacion_detenciones            String?    @db.Text
+  detenciones                      Boolean    @default(false)
+  observacion_detenciones          String?    
   
-  familiares_detenidos               Boolean    @default(false)
-  observacion_familiares_detenidos   String?    @db.Text
+  familiares_detenidos             Boolean    @default(false)
+  observacion_familiares_detenidos String?    
   
-  visitado_carcel                    Boolean    @default(false)
-  observacion_visitado_carcel        String?    @db.Text
+  visitado_carcel                  Boolean    @default(false)
+  observacion_visitado_carcel      String?    
   
-  ultima_verificacion_judicial       DateTime?
+  ultima_verificacion_judicial     DateTime?
   
-  concepto_margen_ley                String?    @db.Text
-  vinculos_margen_ley                String?    @db.Text
+  concepto_margen_ley              String?    
+  vinculos_margen_ley              String?    
   
-  manipulado_armas                   Boolean    @default(false)
-  motivo_armas                       String?    @db.VarChar(100) // Militar, Deportivo, etc.
+  manipulado_armas                 Boolean    @default(false)
+  motivo_armas                     String?    
   
-  actividades_fuera_ley              Boolean    @default(false)
-  propuestas_ilegales                Boolean    @default(false)
-  entorno_ilegal_antecedentes        Boolean    @default(false)
-  participacion_actos_ilegales       Boolean    @default(false)
+  actividades_fuera_ley            Boolean    @default(false)
+  propuestas_ilegales              Boolean    @default(false)
+  entorno_ilegal_antecedentes      Boolean    @default(false)
+  participacion_actos_ilegales     Boolean    @default(false)
   
-  observaciones_generales            String?    @db.Text
+  observaciones_generales          String?    
 
-  entrevista                         Entrevista @relation(fields: [entrevistaId], references: [id], onDelete: Cascade)
+  entrevista                       Entrevista @relation(fields: [entrevistaId], references: [id], onDelete: Cascade)
 
   @@map("judicial")
 }
 
 model Infiltracion {
-  id                         Int        @id @default(autoincrement())
-  entrevistaId               Int        @unique
+  id                 Int        @id @default(autoincrement())
+  entrevistaId       Int        @unique
   
-  motivacion_ingreso         String?    @db.Text
+  motivacion_ingreso String?    
   
-  contactos_empresa          Boolean    @default(false)
-  detalle_contactos          String?    @db.Text
+  contactos_empresa  Boolean    @default(false)
+  detalle_contactos  String?    
   
-  intencion_ilicitos         Boolean    @default(false)
-  acuerdo_ilicitos           Boolean    @default(false)
-  instrucciones_dano         Boolean    @default(false) // Se usa "dano" sin la "ñ" por seguridad en BD
+  intencion_ilicitos Boolean    @default(false)
+  acuerdo_ilicitos   Boolean    @default(false)
+  instrucciones_dano Boolean    @default(false) 
 
-  tiene_tatuajes             Boolean    @default(false)
+  tiene_tatuajes     Boolean    @default(false)
 
-  observaciones              String?    @db.Text
-  nivel_riesgo               String     @default("BAJO") @db.VarChar(20)
+  observaciones      String?    
+  nivel_riesgo       String     @default("BAJO") 
 
-  entrevista                 Entrevista @relation(fields: [entrevistaId], references: [id], onDelete: Cascade)
-  tatuajes                   Tatuaje[]
+  entrevista         Entrevista @relation(fields: [entrevistaId], references: [id], onDelete: Cascade)
+  tatuajes           Tatuaje[]
 
   @@map("infiltracion")
 }
@@ -342,11 +342,11 @@ model Validaciones {
   entrevistaId            Int        @unique
   documentos_verificados  Boolean    @default(false)
   referencias_verificadas Boolean    @default(false)
-  resultado_general       String     @default("PENDIENTE") @db.VarChar(50)
+  resultado_general       String     @default("PENDIENTE") 
   calificacion            Int?
-  recomendacion           String?    @db.Text
-  observaciones_finales   String?    @db.Text
-  aprobado_por            String?    @db.VarChar(200)
+  recomendacion           String?    
+  observaciones_finales   String?    
+  aprobado_por            String?    
   fecha_validacion        DateTime?
   entrevista              Entrevista @relation(fields: [entrevistaId], references: [id], onDelete: Cascade)
   @@map("validaciones")
@@ -355,8 +355,8 @@ model Validaciones {
 model Tatuaje {
   id             Int          @id @default(autoincrement())
   infiltracionId Int
-  descripcion    String?      @db.Text
-  fotografia     String?      @db.VarChar(500)
+  descripcion    String?      
+  fotografia     String?      
   infiltracion   Infiltracion @relation(fields: [infiltracionId], references: [id], onDelete: Cascade)
 
   @@map("tatuajes")
@@ -365,25 +365,25 @@ model Tatuaje {
 model Auditoria {
   id         Int      @id @default(autoincrement())
   usuarioId  Int
-  accion     String   @db.VarChar(200)
-  tabla      String   @db.VarChar(100)
+  accion     String   
+  tabla      String   
   registroId Int?
-  datos      String?  @db.Text
-  ip         String?  @db.VarChar(50)
+  datos      String?  
+  ip         String?  
   createdAt  DateTime @default(now())
   usuario    Usuario  @relation(fields: [usuarioId], references: [id])
   @@map("auditoria")
 }
 
 model Configuracion {
-  id                 Int      @id @default(1)
-  logo_izq_url       String?  @db.Text  
-  logo_izq_opacidad  Float    @default(0.35)
-  logo_izq_visible   Boolean  @default(true)
-  logo_der_url       String?  @db.Text   
-  logo_der_opacidad  Float    @default(0.35)
-  logo_der_visible   Boolean  @default(true)
-  color_corporativo  String   @default("#1e3a5f")
-  texto_footer       String   @default("SEGURIDAD GRUPO EMPRESARIAL ROJAS")
-  updatedAt          DateTime @updatedAt
+  id                Int      @id @default(1)
+  logo_izq_url      String?  
+  logo_izq_opacidad Float    @default(0.35)
+  logo_izq_visible  Boolean  @default(true)
+  logo_der_url      String?  
+  logo_der_opacidad Float    @default(0.35)
+  logo_der_visible  Boolean  @default(true)
+  color_corporativo String   @default("#1e3a5f")
+  texto_footer      String   @default("SEGURIDAD GRUPO EMPRESARIAL ROJAS")
+  updatedAt         DateTime @updatedAt
 }

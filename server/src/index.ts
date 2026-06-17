@@ -19,7 +19,7 @@ const PORT = process.env.PORT || 3001;
 // MIDDLEWARE GLOBAL
 // =============================================
 app.use(cors({
-  origin: ['http://localhost:1420', 'http://localhost:5173', 'tauri://localhost'],
+  origin: true, // Permitir todas las URLs de origen (puede ser ajustado a dominios específicos)
   credentials: true,
 }));
 
@@ -78,3 +78,4 @@ app.listen(PORT, () => {
 });
 
 export default app;
+
