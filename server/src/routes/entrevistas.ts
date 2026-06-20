@@ -7,10 +7,14 @@ import path from 'path';
 import fs from 'fs';
 import { Prisma } from '@prisma/client';
 
+// Helper de rutas para desarrollo y pkg (.exe)
+const isPkg = typeof (process as any).pkg !== 'undefined';
+const baseDir = isPkg ? path.dirname(process.execPath) : path.join(__dirname, '../../');
+
 // ── Multer: fotos de candidatos ──────────────────────────────
 const storageCandidatos = multer.diskStorage({
   destination: (_req, _file, cb) => {
-    const dir = path.join(__dirname, '../../uploads/candidatos');
+    const dir = path.join(baseDir, 'uploads/candidatos');
     if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
     cb(null, dir);
   },
@@ -31,7 +35,7 @@ const uploadCandidato = multer({
 // ── Multer: fotos de tatuajes ────────────────────────────────
 const storageTatuajes = multer.diskStorage({
   destination: (_req, _file, cb) => {
-    const dir = path.join(__dirname, '../../uploads/tatuajes');
+    const dir = path.join(baseDir, 'uploads/tatuajes');
     if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
     cb(null, dir);
   },
@@ -52,7 +56,9 @@ const uploadTatuaje = multer({
 // --- HELPER: Limpieza de archivos físicos ---
 const borrarArchivoFisico = (rutaRelativa: string | null) => {
   if (!rutaRelativa) return;
-  const filePath = path.join(__dirname, '../../', rutaRelativa);
+  // Eliminamos el '/' inicial si existe para evitar problemas de path.join en Windows
+  const rutaLimpia = rutaRelativa.startsWith('/') ? rutaRelativa.slice(1) : rutaRelativa;
+  const filePath = path.join(baseDir, rutaLimpia);
   if (fs.existsSync(filePath)) {
     try { fs.unlinkSync(filePath); } catch (err) { console.error(err); }
   }

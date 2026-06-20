@@ -4,6 +4,10 @@ import path from 'path';
 import fs from 'fs';
 import { body, validationResult } from 'express-validator';
 import { prisma } from '../utils/prisma';
+
+// Helper de rutas para desarrollo y pkg (.exe)
+const isPkg = typeof (process as any).pkg !== 'undefined';
+const baseDir = isPkg ? path.dirname(process.execPath) : path.join(__dirname, '../../');
 import { authMiddleware, AuthRequest } from '../middleware/auth';
 
 export const entrevistadoresRouter = Router();
@@ -12,7 +16,7 @@ entrevistadoresRouter.use(authMiddleware);
 // Configuración de multer para fotos
 const storage = multer.diskStorage({
   destination: (_req, _file, cb) => {
-    const dir = path.join(__dirname, '../../uploads/entrevistadores');
+    const dir = path.join(baseDir, 'uploads/entrevistadores');
     if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
     cb(null, dir);
   },
